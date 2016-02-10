@@ -36,5 +36,6 @@
     "type": "git",
     "url": "https://github.com/cloudfoundry-community/etherpad-lite-cf.git"
   },
-  "version": "1.5.7-cf"
+  "version": "1.5.7-cf",
+  "license": "Apache-2.0"
 }

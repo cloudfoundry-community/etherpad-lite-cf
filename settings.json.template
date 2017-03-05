@@ -3,7 +3,7 @@
 
   Please edit settings.json, not settings.json.template
 
-  To still commit settings without credentials you can 
+  To still commit settings without credentials you can
   store any credential settings in credentials.json
 */
 {
@@ -14,6 +14,11 @@
   "favicon": "favicon.ico",
   //IP and port which etherpad should bind at
   "ip": "0.0.0.0",
+  "port" : 9001,
+
+  // Option to hide/show the settings.json in admin page, default option is set to true
+  "showSettingsInAdminPage" : true,
+
   /*
   // Node native SSL support
   // this is disabled by default
@@ -169,35 +174,34 @@
       {
         "type": "console"
         //, "category": "access"// only logs pad access
-      }
-      /*
-        , { "type": "file"
-        , "filename": "your-log-file-here.log"
-        , "maxLogSize": 1024
-        , "backups": 3 // how many log files there're gonna be at max
-        //, "category": "test" // only log a specific category
-          }*/
-      /*
-        , { "type": "logLevelFilter"
-          , "level": "warn" // filters out all log messages that have a lower level than "error"
-          , "appender":
-            {  Use whatever appender you want here  }
-          }*/
-      /*
-        , { "type": "logLevelFilter"
-          , "level": "error" // filters out all log messages that have a lower level than "error"
-          , "appender":
-            { "type": "smtp"
-            , "subject": "An error occured in your EPL instance!"
-            , "recipients": "bar@blurdybloop.com, baz@blurdybloop.com"
-            , "sendInterval": 60*5 // in secs -- will buffer log messages; set to 0 to send a mail for every message
-            , "transport": "SMTP", "SMTP": { // see https://github.com/andris9/Nodemailer#possible-transport-methods
-                "host": "smtp.example.com", "port": 465,
-                "secureConnection": true,
-                "auth": {
-                    "user": "foo@example.com",
-                    "pass": "bar_foo"
-                }
+        }
+    /*
+      , { "type": "file"
+      , "filename": "your-log-file-here.log"
+      , "maxLogSize": 1024
+      , "backups": 3 // how many log files there're gonna be at max
+      //, "category": "test" // only log a specific category
+        }*/
+    /*
+      , { "type": "logLevelFilter"
+        , "level": "warn" // filters out all log messages that have a lower level than "error"
+        , "appender":
+          {  Use whatever appender you want here  }
+        }*/
+    /*
+      , { "type": "logLevelFilter"
+        , "level": "error" // filters out all log messages that have a lower level than "error"
+        , "appender":
+          { "type": "smtp"
+          , "subject": "An error occurred in your EPL instance!"
+          , "recipients": "bar@blurdybloop.com, baz@blurdybloop.com"
+          , "sendInterval": 300 // 60 * 5 = 5 minutes -- will buffer log messages; set to 0 to send a mail for every message
+          , "transport": "SMTP", "SMTP": { // see https://github.com/andris9/Nodemailer#possible-transport-methods
+              "host": "smtp.example.com", "port": 465,
+              "secureConnection": true,
+              "auth": {
+                  "user": "foo@example.com",
+                  "pass": "bar_foo"
               }
             }
           }*/

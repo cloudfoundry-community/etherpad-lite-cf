@@ -9,7 +9,7 @@ This repo contains a modified version of the original etherpad-lite modified to 
  1. Download the `etherpad-lite-cf.zip` in release tab on github.
  2. Extract the zip file
  3. Go to the extracted archive with your console
- 4. 
+ 4.
     - Run `cf push etherpad-lite -m 512M` and you will have a sqlite instance on your app created
     - (With a database user provided) Follow this [instructions](#using-database-from-user-provided-service) and run `cf push etherpad-lite -m 512M`
  5. You're done
@@ -43,7 +43,7 @@ See the list:
  1. Create a database service which have an uri, the name must follow this regex: `/.*(db|database|pg|postgres|mysql|mongo|lite|level|dirty|redis|couch|elasticsearch).*/i`
  2. Bind your service to your app `cf bind-service <app> <service name>`
  3. you need to... No that's all, push your app :)
- 
+
 ## Using LDAP from user provided service
 Ldap plugin is erroring with new etherpad-lite, currently moved this into the branch "cloudfoundry-with-ldap" (or see directly here: https://github.com/cloudfoundry-community/etherpad-lite-cf/tree/cloudfoundry-with-ldap#using-ldap-from-user-provided-service)
 

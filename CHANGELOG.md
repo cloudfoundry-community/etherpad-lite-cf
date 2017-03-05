@@ -1,3 +1,64 @@
+#1.6.1
+ * NEW: Hook aceRegisterNonScrollableEditEvents to register events that shouldn't scroll
+ * NEW: Added 'item' parameter to registerAceCommand Hook
+ * NEW: Added LibreJS support
+ * Fix: Crash on malformed export url
+ * Fix: Re-enable editor after user is reconnected to server
+ * Fix: minification
+ * Other: Added 'no-referrer' for all pads
+ * Other: Improved cookie security
+ * Other: Fixed compatibility with nodejs 7
+ * Other: Updates
+  - socket.io to 1.6.0
+  - express to 4.13.4
+  - express-session to 1.13.0
+  - clean-css to 3.4.12
+  - uglify-js to 2.6.2
+  - log4js to 0.6.35
+  - cheerio to 0.20.0
+  - ejs to 2.4.1
+  - graceful-fs to 4.1.3
+  - semver to 5.1.0
+  - unorm to 1.4.1
+  - jsonminify to 0.4.1
+  - measured to 1.1.0
+  - mocha to 2.4.5
+  - supertest to 1.2.0
+  - npm to 4.0.2
+  - Node.js for Windows to 6.9.2
+
+# 1.6.0
+ * SECURITY: Fix a possible xss attack in iframe link
+ * NEW: Add a aceSelectionChanged hook to allow plugins to react when the cursor location changes.
+ * NEW: Accepting Arrays on 'exportHtmlAdditionalTags' to handle attributes stored as ['key', 'value']
+ * NEW: Allow admin to run on a sub-directory
+ * NEW: Support version 5 of node.js
+ * NEW: Update windows build to node version 4.4.3
+ * NEW: Create setting to control if a new line will be indented or not
+ * NEW: Add an appendText API
+ * NEW: Allow LibreOffice to be used when exporting a pad
+ * NEW: Create hook exportHtmlAdditionalTagsWithData
+ * NEW: Improve DB migration performance
+ * NEW: allow settings to be applied from the filesystem 
+ * NEW: remove applySettings hook and allow credentials.json to be part of core
+ * NEW: Use exec to switch to node process
+ * NEW: Validate incoming color codes
+ * Fix: Avoid space removal when pasting text from word processor.
+ * Fix: Removing style that makes editor scroll to the top on iOS without any action from the user
+ * Fix: Fix API call appendChatMessage to send new message to all connected clients
+ * Fix: Timeslider "Return to pad" button
+ * Fix: Generating pad HTML with tags like <span data-TAG="VALUE"> instead of <TAG:VALUE>
+ * Fix: Get git commit hash even if the repo only points to a bare repo.
+ * Fix: Fix decode error if pad name contains special characters and is sanitized
+ * Fix: Fix handleClientMessage_USER_* payloads not containing user info
+ * Fix: Set language cookie on initial load
+ * Fix: Timeslider Not Translated
+ * Other: set charset for mysql connection in settings.json
+ * Other: Dropped support for io.js
+ * Other: Add support to store credentials in credentials.json
+ * Other: Support node version 4 or higher
+ * Other: Update uberDB to version 0.3.0
+
 # 1.5.7
  * NEW: Add support for intermediate CA certificates for ssl
  * NEW: Provide a script to clean up before running etherpad

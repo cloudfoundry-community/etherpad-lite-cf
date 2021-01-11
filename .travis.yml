@@ -10,7 +10,6 @@ install:
   - cp -R node_modules/ep_etherpad-lite/node_modules/log4js node_modules/
   - rm node_modules/ep_etherpad-lite
   - sed -i 's/npm ci//g' bin/installDeps.sh
-  - sed -i -e 's/ENGINE=MyISAM/ENGINE=INNODB/' src/node_modules/ueberdb2/mysql_db.js
   - zip -q -r etherpad-lite-cf ./*
 script:
   - "npm -v"

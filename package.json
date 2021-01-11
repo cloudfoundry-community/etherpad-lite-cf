@@ -48,12 +48,12 @@
   "devDependencies": {
   },
   "engines": {
-    "node": "10.x"
+    "node": "14.x"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/cloudfoundry-community/etherpad-lite-cf.git"
   },
-  "version": "1.7.5-cf-node10",
+  "version": "1.7.5-cf-node14",
   "license": "Apache-2.0"
 }

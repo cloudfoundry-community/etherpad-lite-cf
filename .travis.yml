@@ -13,6 +13,7 @@ install:
   - sed -i -e 's/ENGINE=MyISAM/ENGINE=INNODB/' src/node_modules/ueberdb2/mysql_db.js
   - zip -q -r etherpad-lite-cf ./*
 script:
+  - "npm -v"
   - "tests/frontend/travis/runner.sh"
 deploy:
   provider: releases

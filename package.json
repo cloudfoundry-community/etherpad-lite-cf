@@ -40,15 +40,16 @@
     "ep_set_title_on_pad": "0.1.4",
     "ep_table_of_contents": "0.1.15",
     "ep_tables2": "0.2.13",
-    "ep_wrap": "0.0.4"
+    "ep_wrap": "0.0.4",
+    "graceful-fs": "4.2.4"
   },
   "bin": {
     "etherpad-lite": "./node/server.js"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "engines": {
-    "node": "14.x"
+    "node": "14.x",
+    "npm": "6.14.x"
   },
   "repository": {
     "type": "git",

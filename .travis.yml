@@ -1,19 +1,19 @@
 sudo: false
 language: node_js
 node_js:
-- '14'
+  - "14"
 install:
-- npm install --loglevel warn
-- bin/installDeps.sh
-- export GIT_HASH=$(git rev-parse --verify --short HEAD)
-- 'echo "web: bin/run.sh" > Procfile'
-- cp -R node_modules/ep_etherpad-lite/node_modules/log4js node_modules/
-- rm node_modules/ep_etherpad-lite
-- sed -i 's/npm install --loglevel warn//g' bin/installDeps.sh
-- sed -i -e 's/ENGINE=MyISAM/ENGINE=INNODB/' src/node_modules/ueberdb2/mysql_db.js
-- zip -q -r etherpad-lite-cf ./*
+  - npm install --loglevel warn
+  - bin/installDeps.sh
+  - export GIT_HASH=$(git rev-parse --verify --short HEAD)
+  - 'echo "web: bin/run.sh" > Procfile'
+  - cp -R node_modules/ep_etherpad-lite/node_modules/log4js node_modules/
+  - rm node_modules/ep_etherpad-lite
+  - sed -i 's/npm install --no-save --loglevel warn//g' bin/installDeps.sh
+  - sed -i -e 's/ENGINE=MyISAM/ENGINE=INNODB/' src/node_modules/ueberdb2/mysql_db.js
+  - zip -q -r etherpad-lite-cf ./*
 script:
-- "tests/frontend/travis/runner.sh"
+  - "tests/frontend/travis/runner.sh"
 deploy:
   provider: releases
   api_key:

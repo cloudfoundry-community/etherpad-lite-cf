@@ -1,8 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Naudefj",
-			"Fwolff"
+			"Fwolff",
+			"Naudefj"
 		]
 	},
 	"index.newPad": "Nuwe pad",
@@ -25,7 +25,6 @@
 	"pad.loading": "Laai...",
 	"pad.settings.myView": "My oorsig",
 	"pad.settings.fontType.normal": "Normaal",
-	"pad.settings.fontType.monospaced": "Monospasie",
 	"pad.settings.language": "Taal:",
 	"pad.importExport.import_export": "Voer in/uit",
 	"pad.importExport.import": "Laai enige tekslêer of dokument op",
@@ -66,9 +65,6 @@
 	"timeslider.month.december": "Desember",
 	"pad.userlist.entername": "Verskaf u naam",
 	"pad.userlist.unnamed": "sonder naam",
-	"pad.userlist.guest": "Gas",
-	"pad.userlist.deny": "Keur af",
-	"pad.userlist.approve": "Keur goed",
 	"pad.impexp.importbutton": "Voer nou in",
 	"pad.impexp.importing": "Besig met invoer...",
 	"pad.impexp.importfailed": "Invoer het gefaal"

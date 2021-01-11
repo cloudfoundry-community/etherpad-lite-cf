@@ -19,80 +19,54 @@
  */
 
 
-var ERR = require("async-stacktrace");
-var db = require("./DB").db;
-var async = require("async");
-var randomString = require("../utils/randomstring");
+const db = require('./DB');
+const randomString = require('../utils/randomstring');
+
+
+/**
+ * checks if the id pattern matches a read-only pad id
+ * @param {String} the pad's id
+ */
+exports.isReadOnlyId = function (id) {
+  return id.indexOf('r.') === 0;
+};
 
 /**
  * returns a read only id for a pad
  * @param {String} padId the id of the pad
  */
-exports.getReadOnlyId = function (padId, callback)
-{  
-  var readOnlyId;
-  
-  async.waterfall([
-    //check if there is a pad2readonly entry
-    function(callback)
-    {
-      db.get("pad2readonly:" + padId, callback);
-    },
-    function(dbReadOnlyId, callback)
-    {
-      //there is no readOnly Entry in the database, let's create one
-      if(dbReadOnlyId == null)
-      {
-        readOnlyId = "r." + randomString(16);
-        
-        db.set("pad2readonly:" + padId, readOnlyId);
-        db.set("readonly2pad:" + readOnlyId, padId);
-      }
-      //there is a readOnly Entry in the database, let's take this one
-      else
-      {
-        readOnlyId = dbReadOnlyId;
-      }
-      
-      callback();
-    }
-  ], function(err)
-  {
-    if(ERR(err, callback)) return;
-    //return the results
-    callback(null, readOnlyId);
-  })
-}
+exports.getReadOnlyId = async function (padId) {
+  // check if there is a pad2readonly entry
+  let readOnlyId = await db.get(`pad2readonly:${padId}`);
+
+  // there is no readOnly Entry in the database, let's create one
+  if (readOnlyId == null) {
+    readOnlyId = `r.${randomString(16)}`;
+    db.set(`pad2readonly:${padId}`, readOnlyId);
+    db.set(`readonly2pad:${readOnlyId}`, padId);
+  }
+
+  return readOnlyId;
+};
 
 /**
- * returns a the padId for a read only id
+ * returns the padId for a read only id
  * @param {String} readOnlyId read only id
  */
-exports.getPadId = function(readOnlyId, callback)
-{
-  db.get("readonly2pad:" + readOnlyId, callback);
-}
+exports.getPadId = function (readOnlyId) {
+  return db.get(`readonly2pad:${readOnlyId}`);
+};
 
 /**
- * returns a the padId and readonlyPadId in an object for any id
+ * returns the padId and readonlyPadId in an object for any id
  * @param {String} padIdOrReadonlyPadId read only id or real pad id
  */
-exports.getIds = function(id, callback) {
-  if (id.indexOf("r.") == 0)
-    exports.getPadId(id, function (err, value) {
-      if(ERR(err, callback)) return;
-      callback(null, {
-        readOnlyPadId: id,
-        padId: value, // Might be null, if this is an unknown read-only id
-        readonly: true
-      });
-    });
-  else
-    exports.getReadOnlyId(id, function (err, value) {
-      callback(null, {
-        readOnlyPadId: value,
-        padId: id,
-        readonly: false
-      });
-    });
-}
+exports.getIds = async function (id) {
+  const readonly = (id.indexOf('r.') === 0);
+
+  // Might be null, if this is an unknown read-only id
+  const readOnlyPadId = readonly ? id : await exports.getReadOnlyId(id);
+  const padId = readonly ? await exports.getPadId(id) : id;
+
+  return {readOnlyPadId, padId, readonly};
+};

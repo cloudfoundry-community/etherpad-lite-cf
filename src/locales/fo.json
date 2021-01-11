@@ -20,9 +20,7 @@
 	"pad.colorpicker.save": "Goym",
 	"pad.colorpicker.cancel": "Ógilda",
 	"pad.loading": "Løðir...",
-	"pad.passwordRequired": "Tú hevur brúk fyri einum loyniorði fyri at fáa atgongd til henda paddin",
 	"pad.permissionDenied": "Tú hevur ikki loyvi til at fáa atgongd til henda paddin",
-	"pad.wrongPassword": "Títt loyniorð var skeivt",
 	"pad.settings.padSettings": "Pad innstillingar",
 	"pad.settings.myView": "Mín sýning",
 	"pad.settings.stickychat": "Kjatta altíð á skerminum",
@@ -31,8 +29,6 @@
 	"pad.settings.rtlcheck": "Vil tú lesa innihaldið frá høgru til vinstu?",
 	"pad.settings.fontType": "Skriftslag:",
 	"pad.settings.fontType.normal": "Vanligt",
-	"pad.settings.fontType.monospaced": "Føst breidd",
-	"pad.settings.globalView": "Global sýning",
 	"pad.settings.language": "Mál:",
 	"pad.importExport.import_export": "Innflyt/Útflyt",
 	"pad.importExport.import": "Legg út onkra tekstfílu ella dokument",
@@ -86,8 +82,5 @@
 	"timeslider.unnamedauthors": "{{num}} {[plural(num) one: ónevndur rithøvundur, other: ónevndir rithøvundar ]}",
 	"pad.savedrevs.marked": "Henda endurskoðanin er nú merkt sum ein goymd endurskoðan",
 	"pad.userlist.entername": "Skriva títt navn",
-	"pad.userlist.unnamed": "ikki-navngivið",
-	"pad.userlist.guest": "Gestur",
-	"pad.userlist.deny": "Nokta",
-	"pad.userlist.approve": "Góðkenn"
+	"pad.userlist.unnamed": "ikki-navngivið"
 }

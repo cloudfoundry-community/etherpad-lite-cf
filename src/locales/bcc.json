@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Baloch Afghanistan"
+			"Baloch Afghanistan",
+			"Sultanselim baloch"
 		]
 	},
 	"index.newPad": "دفترچه یادداشت تازه",
@@ -26,19 +27,15 @@
 	"pad.colorpicker.save": "زاپاس کورتین",
 	"pad.colorpicker.cancel": "کنسیل",
 	"pad.loading": "...بار بیت",
-	"pad.passwordRequired": "برای دسترسی به این دفترچه یادداشت نیاز به یک گذرواژه دارید",
 	"pad.permissionDenied": "شرمنده، شما را اجازت په دسترسی ای صفحه نیست.",
-	"pad.wrongPassword": "گذرواژه‌ی شما درست نیست",
 	"pad.settings.padSettings": "تنظیمات دفترچه یادداشت",
-	"pad.settings.myView": "نمای من",
+	"pad.settings.myView": "منی سۏج",
 	"pad.settings.stickychat": "گفتگو همیشه روی صفحه نمایش باشد",
 	"pad.settings.colorcheck": "رنگ‌های نویسندگی",
 	"pad.settings.linenocheck": "شماره‌ی خطوط",
 	"pad.settings.rtlcheck": "خواندن محتوا از راست به چپ؟",
 	"pad.settings.fontType": "نوع قلم:",
 	"pad.settings.fontType.normal": "نرمال",
-	"pad.settings.fontType.monospaced": "Monospace",
-	"pad.settings.globalView": "نمای سراسری",
 	"pad.settings.language": "زبان:",
 	"pad.importExport.import_export": "درون‌ریزی/برون‌ریزی",
 	"pad.importExport.import": "بارگذاری پرونده‌ی متنی یا سند",
@@ -71,7 +68,7 @@
 	"pad.modals.corruptPad.cause": "این احتمالاً به دلیل تنظیمات اشتباه کارساز یا سایر رفتارهای غیرمنتظره است. لطفاً با مدیر خدمت تماس حاصل کنید.",
 	"pad.modals.deleted": "پاک کورتین",
 	"pad.modals.deleted.explanation": "این دفترچه یادداشت پاک شده‌است.",
-	"pad.modals.disconnected": "اتصال شما قطع شده‌است.",
+	"pad.modals.disconnected": "شمئی سکّی کھت اِنت۔",
 	"pad.modals.disconnected.explanation": "اتصال به سرور قطع شده‌است.",
 	"pad.modals.disconnected.cause": "ممکن است سرور در دسترس نباشد. اگر این مشکل باز هم رخ داد مدیر حدمت را آگاه کنید.",
 	"pad.share": "به اشتراک‌گذاری این دفترچه یادداشت",
@@ -80,7 +77,7 @@
 	"pad.share.emebdcode": "جاسازی نشانی",
 	"pad.chat": "گفتگو",
 	"pad.chat.title": "بازکردن گفتگو برای این دفترچه یادداشت",
-	"pad.chat.loadmessages": "بارگیری پیام‌های بیشتر",
+	"pad.chat.loadmessages": "گݔشترݔں پیگامء چارگ",
 	"timeslider.pageTitle": "لغزندهٔ زمان {{appTitle}}",
 	"timeslider.toolbar.returnbutton": "بازگشت به دفترچه یادداشت",
 	"timeslider.toolbar.authors": "نویسوک:",
@@ -106,9 +103,6 @@
 	"pad.savedrevs.marked": "این بازنویسی هم اکنون به عنوان ذخیره شده علامت‌گذاری شد",
 	"pad.userlist.entername": "وتی یوزرنامء بلک ات",
 	"pad.userlist.unnamed": "بدون نام",
-	"pad.userlist.guest": "مهمان",
-	"pad.userlist.deny": "رد کردن",
-	"pad.userlist.approve": "تایید",
 	"pad.editbar.clearcolors": "رنگ نویسندگی از همه‌ی سند پاک شود؟",
 	"pad.impexp.importbutton": "هم اکنون درون‌ریزی کن",
 	"pad.impexp.importing": "در حال درون‌ریزی...",

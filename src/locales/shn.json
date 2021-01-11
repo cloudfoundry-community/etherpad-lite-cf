@@ -1,9 +1,9 @@
 {
 	"@metadata": {
 		"authors": [
-			"Saosukham",
 			"Ninjastrikers",
-			"Saimawnkham"
+			"Saimawnkham",
+			"Saosukham"
 		]
 	},
 	"index.newPad": "ၽႅတ်ႉမႂ်ႇ",
@@ -29,9 +29,7 @@
 	"pad.colorpicker.cancel": "ဢမ်ႇႁဵတ်း",
 	"pad.loading": "တိုၵ်ႉလူတ်ႇ",
 	"pad.noCookie": "ၶုၵ်းၶီး ဢမ်ႇႁၼ်လႆႈ။ ၶႅၼ်းတေႃႈ ၶႂၢင်းပၼ် ၶုၵ်းၶီး တီႈၼႂ်း ပရၢဝ်ႇသႃႇၸဝ်ႈၵဝ်ႇ",
-	"pad.passwordRequired": "တႃႇၶဝ်ႈတီႈၽႅတ်ႉၼႆႉ ၸဝ်ႈၵဝ်ႇ လူဝ်ႇမီး မၢႆလပ်ႉ",
 	"pad.permissionDenied": "ၸဝ်ႈၵဝ်ႇ ဢမ်ႇမီးၶေႃႈၶႂၢင်ႉ တႃႇၶဝ်ႈၼႂ်းၽႅတ်ႉၼႆႉ",
-	"pad.wrongPassword": "မၢႆလပ်ႉၸဝ်ႈၵဝ်ႇ ၽိတ်း",
 	"pad.settings.padSettings": "ပိူင်သၢင်ႈၽႅတ်ႉ",
 	"pad.settings.myView": "ဝိဝ်းၵဝ်",
 	"pad.settings.stickychat": "ၶျၢတ်ႉၼိူဝ်ၼႃႈၽိဝ် တႃႇသေႇ",
@@ -40,7 +38,6 @@
 	"pad.settings.linenocheck": "တူဝ်လိၵ်ႈႁေႈႁၢႆး",
 	"pad.settings.rtlcheck": "လူၵႂၢမ်းၼၢမ်း တႄႇၶႂႃတေႃႇသၢႆႉ",
 	"pad.settings.fontType": "ၾွၼ်ႉတူဝ်လိၵ်ႈ",
-	"pad.settings.globalView": "ဝိဝ်းတင်းလူၵ်ႈ",
 	"pad.settings.language": "ၽႃႇသႃႇၵႂၢမ်း:",
 	"pad.importExport.import_export": "သူင်ႇၶဝ်/သူင်ႇဢွၵ်ႇ",
 	"pad.importExport.import": "လူတ်ႇၶိုၼ်ႈ ၾၢႆႇလိၵ်ႈၵမ်ႈၽွင်ႈ ဢမ်ႇၼၼ် ပွင်ႈလိၵ်ႈ",
@@ -115,9 +112,6 @@
 	"pad.savedrevs.timeslider": "ၸဝ်ႈၵဝ်ႇတေတူၺ်းလႆႈ ဢၼ်ၶိုၼ်းမႄးသိမ်းဝႆႉၼၼ်ႉယူႇ ပေႃးၶဝ်ႈတူၺ်းတီႈ ၶၢဝ်းယၢမ်းထေႃပူၼ်ႉ",
 	"pad.userlist.entername": "ပေႃႇသႂ်ႇပၼ် ၸိုဝ်ႈၽူႈၸႂ်ႉတိုဝ်း ၸဝ်ႈၵဝ်ႇ",
 	"pad.userlist.unnamed": "ဢမ်ႇသႂ်ႇၸိုဝ်ႈ",
-	"pad.userlist.guest": "ၶႅၵ်ႇ",
-	"pad.userlist.deny": "ထဵင်",
-	"pad.userlist.approve": "ၵမ်ႉထႅမ်",
 	"pad.editbar.clearcolors": "လၢင်ႉပႅတ်ႈသီၵဝ်ႇ တမ်ႈတီႈ ၼိူဝ်ၶေႃႈလိၵ်ႈတင်းသဵင်ႈ",
 	"pad.impexp.importbutton": "သူင်ႇၶဝ်ႈယၢမ်းလဵဝ်",
 	"pad.impexp.importing": "တိုၵ်ႉသူင်ႇၶဝ်ႈယူႇ",

@@ -3,43 +3,40 @@
  */
 
 
-var ERR = require("async-stacktrace");
-var Changeset = require("ep_etherpad-lite/static/js/Changeset");
-var AttributePool = require("ep_etherpad-lite/static/js/AttributePool");
-var db = require("./DB").db;
-var async = require("async");
-var settings = require('../utils/Settings');
-var authorManager = require("./AuthorManager");
-var padManager = require("./PadManager");
-var padMessageHandler = require("../handler/PadMessageHandler");
-var groupManager = require("./GroupManager");
-var customError = require("../utils/customError");
-var readOnlyManager = require("./ReadOnlyManager");
-var crypto = require("crypto");
-var randomString = require("../utils/randomstring");
-var hooks = require('ep_etherpad-lite/static/js/pluginfw/hooks');
+const Changeset = require('ep_etherpad-lite/static/js/Changeset');
+const AttributePool = require('ep_etherpad-lite/static/js/AttributePool');
+const db = require('./DB');
+const settings = require('../utils/Settings');
+const authorManager = require('./AuthorManager');
+const padManager = require('./PadManager');
+const padMessageHandler = require('../handler/PadMessageHandler');
+const groupManager = require('./GroupManager');
+const customError = require('../utils/customError');
+const readOnlyManager = require('./ReadOnlyManager');
+const crypto = require('crypto');
+const randomString = require('../utils/randomstring');
+const hooks = require('ep_etherpad-lite/static/js/pluginfw/hooks');
+const promises = require('../utils/promises');
 
-//serialization/deserialization attributes
-var attributeBlackList = ["id"];
-var jsonableList = ["pool"];
+// serialization/deserialization attributes
+const attributeBlackList = ['id'];
+const jsonableList = ['pool'];
 
 /**
  * Copied from the Etherpad source code. It converts Windows line breaks to Unix line breaks and convert Tabs to spaces
  * @param txt
  */
 exports.cleanText = function (txt) {
-  return txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\t/g, '        ').replace(/\xa0/g, ' ');
+  return txt.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\t/g, '        ').replace(/\xa0/g, ' ');
 };
 
 
-var Pad = function Pad(id) {
-
-  this.atext = Changeset.makeAText("\n");
+const Pad = function Pad(id) {
+  this.atext = Changeset.makeAText('\n');
   this.pool = new AttributePool();
   this.head = -1;
   this.chatHead = -1;
   this.publicStatus = false;
-  this.passwordHash = null;
   this.id = id;
   this.savedRevisions = [];
 };
@@ -59,13 +56,11 @@ Pad.prototype.getSavedRevisionsNumber = function getSavedRevisionsNumber() {
 };
 
 Pad.prototype.getSavedRevisionsList = function getSavedRevisionsList() {
-  var savedRev = new Array();
-  for(var rev in this.savedRevisions){
+  const savedRev = new Array();
+  for (const rev in this.savedRevisions) {
     savedRev.push(this.savedRevisions[rev].revNum);
   }
-  savedRev.sort(function(a, b) {
-    return a - b;
-  });
+  savedRev.sort((a, b) => a - b);
   return savedRev;
 };
 
@@ -73,87 +68,92 @@ Pad.prototype.getPublicStatus = function getPublicStatus() {
   return this.publicStatus;
 };
 
-Pad.prototype.appendRevision = function appendRevision(aChangeset, author) {
-  if(!author)
+Pad.prototype.appendRevision = async function appendRevision(aChangeset, author) {
+  if (!author) {
     author = '';
+  }
 
-  var newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
+  const newAText = Changeset.applyToAText(aChangeset, this.atext, this.pool);
   Changeset.copyAText(newAText, this.atext);
 
-  var newRev = ++this.head;
+  const newRev = ++this.head;
 
-  var newRevData = {};
+  const newRevData = {};
   newRevData.changeset = aChangeset;
   newRevData.meta = {};
   newRevData.meta.author = author;
-  newRevData.meta.timestamp = new Date().getTime();
+  newRevData.meta.timestamp = Date.now();
 
-  //ex. getNumForAuthor
-  if(author != '')
+  // ex. getNumForAuthor
+  if (author != '') {
     this.pool.putAttrib(['author', author || '']);
+  }
 
-  if(newRev % 100 == 0)
-  {
+  if (newRev % 100 == 0) {
+    newRevData.meta.pool = this.pool;
     newRevData.meta.atext = this.atext;
   }
 
-  db.set("pad:"+this.id+":revs:"+newRev, newRevData);
-  this.saveToDatabase();
+  const p = [
+    db.set(`pad:${this.id}:revs:${newRev}`, newRevData),
+    this.saveToDatabase(),
+  ];
 
   // set the author to pad
-  if(author)
-    authorManager.addPad(author, this.id);
+  if (author) {
+    p.push(authorManager.addPad(author, this.id));
+  }
 
   if (this.head == 0) {
-    hooks.callAll("padCreate", {'pad':this, 'author': author});
+    hooks.callAll('padCreate', {pad: this, author});
   } else {
-    hooks.callAll("padUpdate", {'pad':this, 'author': author});
+    hooks.callAll('padUpdate', {pad: this, author, revs: newRev, changeset: aChangeset});
   }
+
+  await Promise.all(p);
 };
 
-//save all attributes to the database
-Pad.prototype.saveToDatabase = function saveToDatabase(){
-  var dbObject = {};
+// save all attributes to the database
+Pad.prototype.saveToDatabase = async function saveToDatabase() {
+  const dbObject = {};
 
-  for(var attr in this){
-    if(typeof this[attr] === "function") continue;
-    if(attributeBlackList.indexOf(attr) !== -1) continue;
+  for (const attr in this) {
+    if (typeof this[attr] === 'function') continue;
+    if (attributeBlackList.indexOf(attr) !== -1) continue;
 
     dbObject[attr] = this[attr];
 
-    if(jsonableList.indexOf(attr) !== -1){
+    if (jsonableList.indexOf(attr) !== -1) {
       dbObject[attr] = dbObject[attr].toJsonable();
     }
   }
 
-  db.set("pad:"+this.id, dbObject);
-}
+  await db.set(`pad:${this.id}`, dbObject);
+};
 
 // get time of last edit (changeset application)
-Pad.prototype.getLastEdit = function getLastEdit(callback){
-  var revNum = this.getHeadRevisionNumber();
-  db.getSub("pad:"+this.id+":revs:"+revNum, ["meta", "timestamp"], callback);
-}
-
-Pad.prototype.getRevisionChangeset = function getRevisionChangeset(revNum, callback) {
-  db.getSub("pad:"+this.id+":revs:"+revNum, ["changeset"], callback);
+Pad.prototype.getLastEdit = function getLastEdit() {
+  const revNum = this.getHeadRevisionNumber();
+  return db.getSub(`pad:${this.id}:revs:${revNum}`, ['meta', 'timestamp']);
 };
 
-Pad.prototype.getRevisionAuthor = function getRevisionAuthor(revNum, callback) {
-  db.getSub("pad:"+this.id+":revs:"+revNum, ["meta", "author"], callback);
+Pad.prototype.getRevisionChangeset = function getRevisionChangeset(revNum) {
+  return db.getSub(`pad:${this.id}:revs:${revNum}`, ['changeset']);
 };
 
-Pad.prototype.getRevisionDate = function getRevisionDate(revNum, callback) {
-  db.getSub("pad:"+this.id+":revs:"+revNum, ["meta", "timestamp"], callback);
+Pad.prototype.getRevisionAuthor = function getRevisionAuthor(revNum) {
+  return db.getSub(`pad:${this.id}:revs:${revNum}`, ['meta', 'author']);
+};
+
+Pad.prototype.getRevisionDate = function getRevisionDate(revNum) {
+  return db.getSub(`pad:${this.id}:revs:${revNum}`, ['meta', 'timestamp']);
 };
 
 Pad.prototype.getAllAuthors = function getAllAuthors() {
-  var authors = [];
+  const authors = [];
 
-  for(var key in this.pool.numToAttrib)
-  {
-    if(this.pool.numToAttrib[key][0] == "author" && this.pool.numToAttrib[key][1] != "")
-    {
+  for (const key in this.pool.numToAttrib) {
+    if (this.pool.numToAttrib[key][0] == 'author' && this.pool.numToAttrib[key][1] != '') {
       authors.push(this.pool.numToAttrib[key][1]);
     }
   }
@@ -161,121 +161,74 @@ Pad.prototype.getAllAuthors = function getAllAuthors() {
   return authors;
 };
 
-Pad.prototype.getInternalRevisionAText = function getInternalRevisionAText(targetRev, callback) {
-  var _this = this;
+Pad.prototype.getInternalRevisionAText = async function getInternalRevisionAText(targetRev) {
+  const keyRev = this.getKeyRevisionNumber(targetRev);
 
-  var keyRev = this.getKeyRevisionNumber(targetRev);
-  var atext;
-  var changesets = [];
-
-  //find out which changesets are needed
-  var neededChangesets = [];
-  var curRev = keyRev;
-  while (curRev < targetRev)
-  {
-    curRev++;
-    neededChangesets.push(curRev);
+  // find out which changesets are needed
+  const neededChangesets = [];
+  for (let curRev = keyRev; curRev < targetRev;) {
+    neededChangesets.push(++curRev);
   }
 
-  async.series([
-    //get all needed data out of the database
-    function(callback)
-    {
-      async.parallel([
-        //get the atext of the key revision
-        function (callback)
-        {
-          db.getSub("pad:"+_this.id+":revs:"+keyRev, ["meta", "atext"], function(err, _atext)
-          {
-            if(ERR(err, callback)) return;
-            try {
-              atext = Changeset.cloneAText(_atext);
-            } catch (e) {
-              return callback(e);
-            }
+  // get all needed data out of the database
 
-            callback();
-          });
-        },
-        //get all needed changesets
-        function (callback)
-        {
-          async.forEach(neededChangesets, function(item, callback)
-          {
-            _this.getRevisionChangeset(item, function(err, changeset)
-            {
-              if(ERR(err, callback)) return;
-              changesets[item] = changeset;
-              callback();
-            });
-          }, callback);
-        }
-      ], callback);
-    },
-    //apply all changesets to the key changeset
-    function(callback)
-    {
-      var apool = _this.apool();
-      var curRev = keyRev;
+  // start to get the atext of the key revision
+  const p_atext = db.getSub(`pad:${this.id}:revs:${keyRev}`, ['meta', 'atext']);
 
-      while (curRev < targetRev)
-      {
-        curRev++;
-        var cs = changesets[curRev];
-        try{
-          atext = Changeset.applyToAText(cs, atext, apool);
-        }catch(e) {
-          return callback(e)
-        }
-      }
+  // get all needed changesets
+  const changesets = [];
+  await Promise.all(neededChangesets.map((item) => this.getRevisionChangeset(item).then((changeset) => {
+    changesets[item] = changeset;
+  })));
 
-      callback(null);
-    }
-  ], function(err)
-  {
-    if(ERR(err, callback)) return;
-    callback(null, atext);
-  });
+  // we should have the atext by now
+  let atext = await p_atext;
+  atext = Changeset.cloneAText(atext);
+
+  // apply all changesets to the key changeset
+  const apool = this.apool();
+  for (let curRev = keyRev; curRev < targetRev;) {
+    const cs = changesets[++curRev];
+    atext = Changeset.applyToAText(cs, atext, apool);
+  }
+
+  return atext;
 };
 
-Pad.prototype.getRevision = function getRevisionChangeset(revNum, callback) {
-  db.get("pad:"+this.id+":revs:"+revNum, callback);
+Pad.prototype.getRevision = function getRevisionChangeset(revNum) {
+  return db.get(`pad:${this.id}:revs:${revNum}`);
 };
 
-Pad.prototype.getAllAuthorColors = function getAllAuthorColors(callback){
-  var authors = this.getAllAuthors();
-  var returnTable = {};
-  var colorPalette = authorManager.getColorPalette();
+Pad.prototype.getAllAuthorColors = async function getAllAuthorColors() {
+  const authors = this.getAllAuthors();
+  const returnTable = {};
+  const colorPalette = authorManager.getColorPalette();
 
-  async.forEach(authors, function(author, callback){
-    authorManager.getAuthorColorId(author, function(err, colorId){
-      if(err){
-        return callback(err);
-      }
-      //colorId might be a hex color or an number out of the palette
-      returnTable[author]=colorPalette[colorId] || colorId;
+  await Promise.all(authors.map((author) => authorManager.getAuthorColorId(author).then((colorId) => {
+    // colorId might be a hex color or an number out of the palette
+    returnTable[author] = colorPalette[colorId] || colorId;
+  })));
 
-      callback();
-    });
-  }, function(err){
-    callback(err, returnTable);
-  });
+  return returnTable;
 };
 
 Pad.prototype.getValidRevisionRange = function getValidRevisionRange(startRev, endRev) {
   startRev = parseInt(startRev, 10);
-  var head = this.getHeadRevisionNumber();
+  const head = this.getHeadRevisionNumber();
   endRev = endRev ? parseInt(endRev, 10) : head;
-  if(isNaN(startRev) || startRev < 0 || startRev > head) {
+
+  if (isNaN(startRev) || startRev < 0 || startRev > head) {
     startRev = null;
   }
-  if(isNaN(endRev) || endRev < startRev) {
+
+  if (isNaN(endRev) || endRev < startRev) {
     endRev = null;
-  } else if(endRev > head) {
+  } else if (endRev > head) {
     endRev = head;
   }
-  if(startRev !== null && endRev !== null) {
-    return { startRev: startRev , endRev: endRev }
+
+  if (startRev !== null && endRev !== null) {
+    return {startRev, endRev};
   }
   return null;
 };
@@ -288,181 +241,119 @@ Pad.prototype.text = function text() {
   return this.atext.text;
 };
 
-Pad.prototype.setText = function setText(newText) {
-  //clean the new text
+Pad.prototype.setText = async function setText(newText) {
+  // clean the new text
   newText = exports.cleanText(newText);
 
-  var oldText = this.text();
+  const oldText = this.text();
 
-  //create the changeset
+  // create the changeset
   // We want to ensure the pad still ends with a \n, but otherwise keep
   // getText() and setText() consistent.
-  var changeset;
+  let changeset;
   if (newText[newText.length - 1] == '\n') {
     changeset = Changeset.makeSplice(oldText, 0, oldText.length, newText);
   } else {
-    changeset = Changeset.makeSplice(oldText, 0, oldText.length-1, newText);
+    changeset = Changeset.makeSplice(oldText, 0, oldText.length - 1, newText);
   }
 
-  //append the changeset
-  this.appendRevision(changeset);
+  // append the changeset
+  await this.appendRevision(changeset);
 };
 
-Pad.prototype.appendText = function appendText(newText) {
-  //clean the new text
+Pad.prototype.appendText = async function appendText(newText) {
+  // clean the new text
   newText = exports.cleanText(newText);
 
-  var oldText = this.text();
+  const oldText = this.text();
 
-  //create the changeset
-  var changeset = Changeset.makeSplice(oldText, oldText.length, 0, newText);
+  // create the changeset
+  const changeset = Changeset.makeSplice(oldText, oldText.length, 0, newText);
 
-  //append the changeset
-  this.appendRevision(changeset);
+  // append the changeset
+  await this.appendRevision(changeset);
 };
 
-Pad.prototype.appendChatMessage = function appendChatMessage(text, userId, time) {
+Pad.prototype.appendChatMessage = async function appendChatMessage(text, userId, time) {
   this.chatHead++;
-  //save the chat entry in the database
-  db.set("pad:"+this.id+":chat:"+this.chatHead, {"text": text, "userId": userId, "time": time});
-  this.saveToDatabase();
+  // save the chat entry in the database
+  await Promise.all([
+    db.set(`pad:${this.id}:chat:${this.chatHead}`, {text, userId, time}),
+    this.saveToDatabase(),
+  ]);
 };
 
-Pad.prototype.getChatMessage = function getChatMessage(entryNum, callback) {
-  var _this = this;
-  var entry;
+Pad.prototype.getChatMessage = async function getChatMessage(entryNum) {
+  // get the chat entry
+  const entry = await db.get(`pad:${this.id}:chat:${entryNum}`);
 
-  async.series([
-    //get the chat entry
-    function(callback)
-    {
-      db.get("pad:"+_this.id+":chat:"+entryNum, function(err, _entry)
-      {
-        if(ERR(err, callback)) return;
-        entry = _entry;
-        callback();
-      });
-    },
-    //add the authorName
-    function(callback)
-    {
-      //this chat message doesn't exist, return null
-      if(entry == null)
-      {
-        callback();
-        return;
-      }
-
-      //get the authorName
-      authorManager.getAuthorName(entry.userId, function(err, authorName)
-      {
-        if(ERR(err, callback)) return;
-        entry.userName = authorName;
-        callback();
-      });
-    }
-  ], function(err)
-  {
-    if(ERR(err, callback)) return;
-    callback(null, entry);
-  });
-};
-
-Pad.prototype.getChatMessages = function getChatMessages(start, end, callback) {
-  //collect the numbers of chat entries and in which order we need them
-  var neededEntries = [];
-  var order = 0;
-  for(var i=start;i<=end; i++)
-  {
-    neededEntries.push({entryNum:i, order: order});
-    order++;
+  // get the authorName if the entry exists
+  if (entry != null) {
+    entry.userName = await authorManager.getAuthorName(entry.userId);
   }
 
-  var _this = this;
-
-  //get all entries out of the database
-  var entries = [];
-  async.forEach(neededEntries, function(entryObject, callback)
-  {
-    _this.getChatMessage(entryObject.entryNum, function(err, entry)
-    {
-      if(ERR(err, callback)) return;
-      entries[entryObject.order] = entry;
-      callback();
-    });
-  }, function(err)
-  {
-    if(ERR(err, callback)) return;
-
-    //sort out broken chat entries
-    //it looks like in happend in the past that the chat head was
-    //incremented, but the chat message wasn't added
-    var cleanedEntries = [];
-    for(var i=0;i<entries.length;i++)
-    {
-      if(entries[i]!=null)
-        cleanedEntries.push(entries[i]);
-      else
-        console.warn("WARNING: Found broken chat entry in pad " + _this.id);
-    }
-
-    callback(null, cleanedEntries);
-  });
+  return entry;
 };
 
-Pad.prototype.init = function init(text, callback) {
-  var _this = this;
+Pad.prototype.getChatMessages = async function getChatMessages(start, end) {
+  // collect the numbers of chat entries and in which order we need them
+  const neededEntries = [];
+  for (let order = 0, entryNum = start; entryNum <= end; ++order, ++entryNum) {
+    neededEntries.push({entryNum, order});
+  }
 
-  //replace text with default text if text isn't set
-  if(text == null)
-  {
+  // get all entries out of the database
+  const entries = [];
+  await Promise.all(neededEntries.map((entryObject) => this.getChatMessage(entryObject.entryNum).then((entry) => {
+    entries[entryObject.order] = entry;
+  })));
+
+  // sort out broken chat entries
+  // it looks like in happened in the past that the chat head was
+  // incremented, but the chat message wasn't added
+  const cleanedEntries = entries.filter((entry) => {
+    const pass = (entry != null);
+    if (!pass) {
+      console.warn(`WARNING: Found broken chat entry in pad ${this.id}`);
+    }
+    return pass;
+  });
+
+  return cleanedEntries;
+};
+
+Pad.prototype.init = async function init(text) {
+  // replace text with default text if text isn't set
+  if (text == null) {
     text = settings.defaultPadText;
   }
 
-  //try to load the pad
-  db.get("pad:"+this.id, function(err, value)
-  {
-    if(ERR(err, callback)) return;
+  // try to load the pad
+  const value = await db.get(`pad:${this.id}`);
 
-    //if this pad exists, load it
-    if(value != null)
-    {
-      //copy all attr. To a transfrom via fromJsonable if necassary
-      for(var attr in value){
-        if(jsonableList.indexOf(attr) !== -1){
-          _this[attr] = _this[attr].fromJsonable(value[attr]);
-        } else {
-          _this[attr] = value[attr];
-        }
+  // if this pad exists, load it
+  if (value != null) {
+    // copy all attr. To a transfrom via fromJsonable if necassary
+    for (const attr in value) {
+      if (jsonableList.indexOf(attr) !== -1) {
+        this[attr] = this[attr].fromJsonable(value[attr]);
+      } else {
+        this[attr] = value[attr];
       }
     }
-    //this pad doesn't exist, so create it
-    else
-    {
-      var firstChangeset = Changeset.makeSplice("\n", 0, 0, exports.cleanText(text));
+  } else {
+    // this pad doesn't exist, so create it
+    const firstChangeset = Changeset.makeSplice('\n', 0, 0, exports.cleanText(text));
 
-      _this.appendRevision(firstChangeset, '');
-    }
+    await this.appendRevision(firstChangeset, '');
+  }
 
-    hooks.callAll("padLoad", {'pad':_this});
-    callback(null);
-  });
+  hooks.callAll('padLoad', {pad: this});
 };
 
-Pad.prototype.copy = function copy(destinationID, force, callback) {
-  var sourceID = this.id;
-  var _this = this;
-  var destGroupID;
-
-  // make force optional
-  if (typeof force == "function") {
-    callback = force;
-    force = false;
-  }
-  else if (force == undefined || force.toLowerCase() != "true") {
-    force = false;
-  }
-  else force = true;
+Pad.prototype.copy = async function copy(destinationID, force) {
+  let destGroupID;
+  const sourceID = this.id;
 
   // Kick everyone from this pad.
   // This was commented due to https://github.com/ether/etherpad-lite/issues/3183.
@@ -470,305 +361,244 @@ Pad.prototype.copy = function copy(destinationID, force, callback) {
   // padMessageHandler.kickSessionsFromPad(sourceID);
 
   // flush the source pad:
-  _this.saveToDatabase();
+  await this.saveToDatabase();
 
-  async.series([
+
+  try {
     // if it's a group pad, let's make sure the group exists.
-    function(callback)
-    {
-      if (destinationID.indexOf("$") === -1)
-      {
-        callback();
-        return;
-      }
+    destGroupID = await this.checkIfGroupExistAndReturnIt(destinationID);
 
-      destGroupID = destinationID.split("$")[0]
-      groupManager.doesGroupExist(destGroupID, function (err, exists)
-      {
-        if(ERR(err, callback)) return;
+    // if force is true and already exists a Pad with the same id, remove that Pad
+    await this.removePadIfForceIsTrueAndAlreadyExist(destinationID, force);
+  } catch (err) {
+    throw err;
+  }
 
-        //group does not exist
-        if(exists == false)
-        {
-          callback(new customError("groupID does not exist for destinationID","apierror"));
-          return;
-        }
+  // copy the 'pad' entry
+  const pad = await db.get(`pad:${sourceID}`);
+  db.set(`pad:${destinationID}`, pad);
 
-        //everything is fine, continue
-        callback();
-      });
-    },
-    // if the pad exists, we should abort, unless forced.
-    function(callback)
-    {
-      padManager.doesPadExists(destinationID, function (err, exists)
-      {
-        if(ERR(err, callback)) return;
+  // copy all relations in parallel
+  const promises = [];
 
-        /*
-         * this is the negation of a truthy comparison. Has been left in this
-         * wonky state to keep the old (possibly buggy) behaviour
-         */
-        if (!(exists == true))
-        {
-          callback();
-          return;
-        }
+  // copy all chat messages
+  const chatHead = this.chatHead;
+  for (let i = 0; i <= chatHead; ++i) {
+    const p = db.get(`pad:${sourceID}:chat:${i}`).then((chat) => db.set(`pad:${destinationID}:chat:${i}`, chat));
+    promises.push(p);
+  }
 
-        if (!force)
-        {
-          console.error("erroring out without force");
-          callback(new customError("destinationID already exists","apierror"));
-          console.error("erroring out without force - after");
-          return;
-        }
+  // copy all revisions
+  const revHead = this.head;
+  for (let i = 0; i <= revHead; ++i) {
+    const p = db.get(`pad:${sourceID}:revs:${i}`).then((rev) => db.set(`pad:${destinationID}:revs:${i}`, rev));
+    promises.push(p);
+  }
 
-        // exists and forcing
-        padManager.getPad(destinationID, function(err, pad) {
-          if (ERR(err, callback)) return;
-          pad.remove(callback);
-        });
-      });
-    },
-    // copy the 'pad' entry
-    function(callback)
-    {
-      db.get("pad:"+sourceID, function(err, pad) {
-        db.set("pad:"+destinationID, pad);
-      });
+  this.copyAuthorInfoToDestinationPad(destinationID);
 
-      callback();
-    },
-    //copy all relations
-    function(callback)
-    {
-      async.parallel([
-        //copy all chat messages
-        function(callback)
-        {
-          var chatHead = _this.chatHead;
+  // wait for the above to complete
+  await Promise.all(promises);
 
-          for(var i=0;i<=chatHead;i++)
-          {
-            db.get("pad:"+sourceID+":chat:"+i, function (err, chat) {
-              if (ERR(err, callback)) return;
-              db.set("pad:"+destinationID+":chat:"+i, chat);
-            });
-          }
+  // Group pad? Add it to the group's list
+  if (destGroupID) {
+    await db.setSub(`group:${destGroupID}`, ['pads', destinationID], 1);
+  }
 
-          callback();
-        },
-        //copy all revisions
-        function(callback)
-        {
-          var revHead = _this.head;
-          for(var i=0;i<=revHead;i++)
-          {
-            db.get("pad:"+sourceID+":revs:"+i, function (err, rev) {
-              if (ERR(err, callback)) return;
-              db.set("pad:"+destinationID+":revs:"+i, rev);
-            });
-          }
+  // delay still necessary?
+  await new Promise((resolve) => setTimeout(resolve, 10));
 
-          callback();
-        },
-        //add the new pad to all authors who contributed to the old one
-        function(callback)
-        {
-          var authorIDs = _this.getAllAuthors();
-          authorIDs.forEach(function (authorID)
-          {
-            authorManager.addPad(authorID, destinationID);
-          });
+  // Initialize the new pad (will update the listAllPads cache)
+  await padManager.getPad(destinationID, null); // this runs too early.
 
-          callback();
-        },
-      // parallel
-      ], callback);
-    },
-    function(callback) {
-      // Group pad? Add it to the group's list
-      if(destGroupID) db.setSub("group:" + destGroupID, ["pads", destinationID], 1);
+  // let the plugins know the pad was copied
+  hooks.callAll('padCopy', {originalPad: this, destinationID});
 
-      // Initialize the new pad (will update the listAllPads cache)
-      setTimeout(function(){
-        padManager.getPad(destinationID, null, callback) // this runs too early.
-      },10);
-    },
-    // let the plugins know the pad was copied
-    function(callback) {
-      hooks.callAll('padCopy', { 'originalPad': _this, 'destinationID': destinationID });
-      callback();
+  return {padID: destinationID};
+};
+
+Pad.prototype.checkIfGroupExistAndReturnIt = async function checkIfGroupExistAndReturnIt(destinationID) {
+  let destGroupID = false;
+
+  if (destinationID.indexOf('$') >= 0) {
+    destGroupID = destinationID.split('$')[0];
+    const groupExists = await groupManager.doesGroupExist(destGroupID);
+
+    // group does not exist
+    if (!groupExists) {
+      throw new customError('groupID does not exist for destinationID', 'apierror');
     }
-  // series
-  ], function(err)
-  {
-    if(ERR(err, callback)) return;
-    callback(null, {padID: destinationID});
+  }
+  return destGroupID;
+};
+
+Pad.prototype.removePadIfForceIsTrueAndAlreadyExist = async function removePadIfForceIsTrueAndAlreadyExist(destinationID, force) {
+  // if the pad exists, we should abort, unless forced.
+  const exists = await padManager.doesPadExist(destinationID);
+
+  // allow force to be a string
+  if (typeof force === 'string') {
+    force = (force.toLowerCase() === 'true');
+  } else {
+    force = !!force;
+  }
+
+  if (exists) {
+    if (!force) {
+      console.error('erroring out without force');
+      throw new customError('destinationID already exists', 'apierror');
+    }
+
+    // exists and forcing
+    const pad = await padManager.getPad(destinationID);
+    await pad.remove();
+  }
+};
+
+Pad.prototype.copyAuthorInfoToDestinationPad = function copyAuthorInfoToDestinationPad(destinationID) {
+  // add the new sourcePad to all authors who contributed to the old one
+  this.getAllAuthors().forEach((authorID) => {
+    authorManager.addPad(authorID, destinationID);
   });
 };
 
-Pad.prototype.remove = function remove(callback) {
-  var padID = this.id;
-  var _this = this;
+Pad.prototype.copyPadWithoutHistory = async function copyPadWithoutHistory(destinationID, force) {
+  let destGroupID;
+  const sourceID = this.id;
 
-  //kick everyone from this pad
+  // flush the source pad
+  this.saveToDatabase();
+
+  try {
+    // if it's a group pad, let's make sure the group exists.
+    destGroupID = await this.checkIfGroupExistAndReturnIt(destinationID);
+
+    // if force is true and already exists a Pad with the same id, remove that Pad
+    await this.removePadIfForceIsTrueAndAlreadyExist(destinationID, force);
+  } catch (err) {
+    throw err;
+  }
+
+  const sourcePad = await padManager.getPad(sourceID);
+
+  // add the new sourcePad to all authors who contributed to the old one
+  this.copyAuthorInfoToDestinationPad(destinationID);
+
+  // Group pad? Add it to the group's list
+  if (destGroupID) {
+    await db.setSub(`group:${destGroupID}`, ['pads', destinationID], 1);
+  }
+
+  // initialize the pad with a new line to avoid getting the defaultText
+  const newPad = await padManager.getPad(destinationID, '\n');
+
+  const oldAText = this.atext;
+  const newPool = newPad.pool;
+  newPool.fromJsonable(sourcePad.pool.toJsonable()); // copy that sourceId pool to the new pad
+
+  // based on Changeset.makeSplice
+  const assem = Changeset.smartOpAssembler();
+  assem.appendOpWithText('=', '');
+  Changeset.appendATextToAssembler(oldAText, assem);
+  assem.endDocument();
+
+  // although we have instantiated the newPad with '\n', an additional '\n' is
+  // added internally, so the pad text on the revision 0 is "\n\n"
+  const oldLength = 2;
+
+  const newLength = assem.getLengthChange();
+  const newText = oldAText.text;
+
+  // create a changeset that removes the previous text and add the newText with
+  // all atributes present on the source pad
+  const changeset = Changeset.pack(oldLength, newLength, assem.toString(), newText);
+  newPad.appendRevision(changeset);
+
+  hooks.callAll('padCopy', {originalPad: this, destinationID});
+
+  return {padID: destinationID};
+};
+
+
+Pad.prototype.remove = async function remove() {
+  const padID = this.id;
+  const p = [];
+
+  // kick everyone from this pad
   padMessageHandler.kickSessionsFromPad(padID);
 
-  async.series([
-    //delete all relations
-    function(callback)
-    {
-      async.parallel([
-        //is it a group pad? -> delete the entry of this pad in the group
-        function(callback)
-        {
-          if(padID.indexOf("$") === -1)
-          {
-            // it isn't a group pad, nothing to do here
-            callback();
-            return;
-          }
+  // delete all relations - the original code used async.parallel but
+  // none of the operations except getting the group depended on callbacks
+  // so the database operations here are just started and then left to
+  // run to completion
 
-          // it is a group pad
-          var groupID = padID.substring(0,padID.indexOf("$"));
+  // is it a group pad? -> delete the entry of this pad in the group
+  if (padID.indexOf('$') >= 0) {
+    // it is a group pad
+    const groupID = padID.substring(0, padID.indexOf('$'));
+    const group = await db.get(`group:${groupID}`);
 
-          db.get("group:" + groupID, function (err, group)
-          {
-            if(ERR(err, callback)) return;
+    // remove the pad entry
+    delete group.pads[padID];
 
-            //remove the pad entry
-            delete group.pads[padID];
+    // set the new value
+    p.push(db.set(`group:${groupID}`, group));
+  }
 
-            //set the new value
-            db.set("group:" + groupID, group);
+  // remove the readonly entries
+  p.push(readOnlyManager.getReadOnlyId(padID).then(async (readonlyID) => {
+    await db.remove(`readonly2pad:${readonlyID}`);
+  }));
+  p.push(db.remove(`pad2readonly:${padID}`));
 
-            callback();
-          });
-        },
-        //remove the readonly entries
-        function(callback)
-        {
-          readOnlyManager.getReadOnlyId(padID, function(err, readonlyID)
-          {
-            if(ERR(err, callback)) return;
+  // delete all chat messages
+  p.push(promises.timesLimit(this.chatHead + 1, 500, async (i) => {
+    await db.remove(`pad:${padID}:chat:${i}`, null);
+  }));
 
-            db.remove("pad2readonly:" + padID);
-            db.remove("readonly2pad:" + readonlyID);
+  // delete all revisions
+  p.push(promises.timesLimit(this.head + 1, 500, async (i) => {
+    await db.remove(`pad:${padID}:revs:${i}`, null);
+  }));
 
-            callback();
-          });
-        },
-        //delete all chat messages
-        function(callback)
-        {
-          var chatHead = _this.chatHead;
-
-          for(var i=0;i<=chatHead;i++)
-          {
-            db.remove("pad:"+padID+":chat:"+i);
-          }
-
-          callback();
-        },
-        //delete all revisions
-        function(callback)
-        {
-          var revHead = _this.head;
-
-          for(var i=0;i<=revHead;i++)
-          {
-            db.remove("pad:"+padID+":revs:"+i);
-          }
-
-          callback();
-        },
-        //remove pad from all authors who contributed
-        function(callback)
-        {
-          var authorIDs = _this.getAllAuthors();
-
-          authorIDs.forEach(function (authorID)
-          {
-            authorManager.removePad(authorID, padID);
-          });
-
-          callback();
-        }
-      ], callback);
-    },
-    //delete the pad entry and delete pad from padManager
-    function(callback)
-    {
-      padManager.removePad(padID);
-      hooks.callAll("padRemove", {'padID':padID});
-      callback();
-    }
-  ], function(err)
-  {
-    if(ERR(err, callback)) return;
-    callback();
+  // remove pad from all authors who contributed
+  this.getAllAuthors().forEach((authorID) => {
+    p.push(authorManager.removePad(authorID, padID));
   });
+
+  // delete the pad entry and delete pad from padManager
+  p.push(padManager.removePad(padID));
+  hooks.callAll('padRemove', {padID});
+  await Promise.all(p);
 };
-    //set in db
-Pad.prototype.setPublicStatus = function setPublicStatus(publicStatus) {
+
+// set in db
+Pad.prototype.setPublicStatus = async function setPublicStatus(publicStatus) {
   this.publicStatus = publicStatus;
-  this.saveToDatabase();
+  await this.saveToDatabase();
 };
 
-Pad.prototype.setPassword = function setPassword(password) {
-  this.passwordHash = password == null ? null : hash(password, generateSalt());
-  this.saveToDatabase();
-};
-
-Pad.prototype.isCorrectPassword = function isCorrectPassword(password) {
-  return compare(this.passwordHash, password);
-};
-
-Pad.prototype.isPasswordProtected = function isPasswordProtected() {
-  return this.passwordHash != null;
-};
-
-Pad.prototype.addSavedRevision = function addSavedRevision(revNum, savedById, label) {
-  //if this revision is already saved, return silently
-  for(var i in this.savedRevisions){
-    if(this.savedRevisions[i] && this.savedRevisions[i].revNum === revNum){
+Pad.prototype.addSavedRevision = async function addSavedRevision(revNum, savedById, label) {
+  // if this revision is already saved, return silently
+  for (const i in this.savedRevisions) {
+    if (this.savedRevisions[i] && this.savedRevisions[i].revNum === revNum) {
       return;
     }
   }
 
-  //build the saved revision object
-  var savedRevision = {};
+  // build the saved revision object
+  const savedRevision = {};
   savedRevision.revNum = revNum;
   savedRevision.savedById = savedById;
-  savedRevision.label = label || "Revision " + revNum;
-  savedRevision.timestamp = new Date().getTime();
+  savedRevision.label = label || `Revision ${revNum}`;
+  savedRevision.timestamp = Date.now();
   savedRevision.id = randomString(10);
 
-  //save this new saved revision
+  // save this new saved revision
   this.savedRevisions.push(savedRevision);
-  this.saveToDatabase();
+  await this.saveToDatabase();
 };
 
 Pad.prototype.getSavedRevisions = function getSavedRevisions() {
   return this.savedRevisions;
 };
-
-/* Crypto helper methods */
-
-function hash(password, salt)
-{
-  var shasum = crypto.createHash('sha512');
-  shasum.update(password + salt);
-  return shasum.digest("hex") + "$" + salt;
-}
-
-function generateSalt()
-{
-  return randomString(86);
-}
-
-function compare(hashStr, password)
-{
-  return hash(password, hashStr.split("$")[1]) === hashStr;
-}

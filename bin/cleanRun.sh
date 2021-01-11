@@ -1,7 +1,10 @@
 #!/bin/sh
 
-#Move to the folder where ep-lite is installed
-cd `dirname $0`
+# Move to the folder where ep-lite is installed
+cd "$(dirname "$0")"/..
+
+# Source constants and usefull functions
+. bin/functions.sh
 
 #Was this script started in the bin folder? if yes move out
 if [ -d "../bin" ]; then
@@ -9,7 +12,7 @@ if [ -d "../bin" ]; then
 fi
 
 ignoreRoot=0
-for ARG in $*
+for ARG in "$@"
 do
   if [ "$ARG" = "--root" ]; then
     ignoreRoot=1
@@ -32,10 +35,10 @@ fi
 rm -rf src/node_modules
 
 #Prepare the environment
-bin/installDeps.sh $* || exit 1
+bin/installDeps.sh "$@" || exit 1
 
 #Move to the node folder and start
 echo "Started Etherpad..."
 
-SCRIPTPATH=`pwd -P`
-node "${SCRIPTPATH}/node_modules/ep_etherpad-lite/node/server.js" $*
+SCRIPTPATH=$(pwd -P)
+node $(compute_node_args) "${SCRIPTPATH}/node_modules/ep_etherpad-lite/node/server.js" "$@"

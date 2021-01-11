@@ -1,171 +1,147 @@
-var npm = require("npm/lib/npm.js");
-var readInstalled = require("./read-installed.js");
-var path = require("path");
-var async = require("async");
-var fs = require("fs");
-var tsort = require("./tsort");
-var util = require("util");
-var _ = require("underscore");
+const fs = require('fs').promises;
+const hooks = require('./hooks');
+const npm = require('npm/lib/npm.js');
+const readInstalled = require('./read-installed.js');
+const path = require('path');
+const tsort = require('./tsort');
+const util = require('util');
+const _ = require('underscore');
+const settings = require('../../../node/utils/Settings');
 
-var pluginUtils = require('./shared');
+const pluginUtils = require('./shared');
+const defs = require('./plugin_defs');
 
 exports.prefix = 'ep_';
-exports.loaded = false;
-exports.plugins = {};
-exports.parts = [];
-exports.hooks = {};
-
-exports.ensure = function (cb) {
-  if (!exports.loaded)
-    exports.update(cb);
-  else
-    cb();
-};
 
 exports.formatPlugins = function () {
-  return _.keys(exports.plugins).join(", ");
+  return _.keys(defs.plugins).join(', ');
 };
 
 exports.formatPluginsWithVersion = function () {
-  var plugins = [];
-  _.forEach(exports.plugins, function(plugin){
-    if(plugin.package.name !== "ep_etherpad-lite"){
-      var pluginStr = plugin.package.name + "@" + plugin.package.version;
+  const plugins = [];
+  _.forEach(defs.plugins, (plugin) => {
+    if (plugin.package.name !== 'ep_etherpad-lite') {
+      const pluginStr = `${plugin.package.name}@${plugin.package.version}`;
       plugins.push(pluginStr);
     }
   });
-  return plugins.join(", ");
+  return plugins.join(', ');
 };
 
 exports.formatParts = function () {
-  return _.map(exports.parts, function (part) { return part.full_name; }).join("\n");
+  return _.map(defs.parts, (part) => part.full_name).join('\n');
 };
 
 exports.formatHooks = function (hook_set_name) {
-  var res = [];
-  var hooks = pluginUtils.extractHooks(exports.parts, hook_set_name || "hooks");
+  const res = [];
+  const hooks = pluginUtils.extractHooks(defs.parts, hook_set_name || 'hooks');
 
-  _.chain(hooks).keys().forEach(function (hook_name) {
-    _.forEach(hooks[hook_name], function (hook) {
-      res.push("<dt>" + hook.hook_name + "</dt><dd>" + hook.hook_fn_name + " from " + hook.part.full_name + "</dd>");
+  _.chain(hooks).keys().forEach((hook_name) => {
+    _.forEach(hooks[hook_name], (hook) => {
+      res.push(`<dt>${hook.hook_name}</dt><dd>${hook.hook_fn_name} from ${hook.part.full_name}</dd>`);
     });
   });
-  return "<dl>" + res.join("\n") + "</dl>";
+  return `<dl>${res.join('\n')}</dl>`;
 };
 
-exports.callInit = function (cb) {
-  var hooks = require("./hooks");
-  async.map(
-    Object.keys(exports.plugins),
-    function (plugin_name, cb) {
-      var plugin = exports.plugins[plugin_name];
-      fs.stat(path.normalize(path.join(plugin.package.path, ".ep_initialized")), function (err, stats) {
-        if (err) {
-          async.waterfall([
-            function (cb) { fs.writeFile(path.normalize(path.join(plugin.package.path, ".ep_initialized")), 'done', cb); },
-            function (cb) { hooks.aCallAll("init_" + plugin_name, {}, cb); },
-            cb,
-          ]);
-        } else {
-          cb();
-        }
-      });
-    },
-    function () { cb(); }
-  );
-}
+const callInit = async () => {
+  await Promise.all(Object.keys(defs.plugins).map(async (plugin_name) => {
+    const plugin = defs.plugins[plugin_name];
+    const ep_init = path.normalize(path.join(plugin.package.path, '.ep_initialized'));
+    try {
+      await fs.stat(ep_init);
+    } catch (err) {
+      await fs.writeFile(ep_init, 'done');
+      await hooks.aCallAll(`init_${plugin_name}`, {});
+    }
+  }));
+};
 
-exports.pathNormalization = function (part, hook_fn_name) {
-  return path.normalize(path.join(path.dirname(exports.plugins[part.plugin].package.path), hook_fn_name));
-}
+exports.pathNormalization = function (part, hook_fn_name, hook_name) {
+  const tmp = hook_fn_name.split(':'); // hook_fn_name might be something like 'C:\\foo.js:myFunc'.
+  // If there is a single colon assume it's 'filename:funcname' not 'C:\\filename'.
+  const functionName = (tmp.length > 1 ? tmp.pop() : null) || hook_name;
+  const moduleName = tmp.join(':') || part.plugin;
+  const packageDir = path.dirname(defs.plugins[part.plugin].package.path);
+  const fileName = path.normalize(path.join(packageDir, moduleName));
+  return `${fileName}:${functionName}`;
+};
 
-exports.update = function (cb) {
-  exports.getPackages(function (er, packages) {
-    var parts = [];
-    var plugins = {};
-    // Load plugin metadata ep.json
-    async.forEach(
-      Object.keys(packages),
-      function (plugin_name, cb) {
-        loadPlugin(packages, plugin_name, plugins, parts, cb);
-      },
-      function (err) {
-        if (err) cb(err);
-        exports.plugins = plugins;
-        exports.parts = sortParts(parts);
-        exports.hooks = pluginUtils.extractHooks(exports.parts, "hooks", exports.pathNormalization);
-        exports.loaded = true;
-        exports.callInit(cb);
-      }
-    );
-  });
-  };
+exports.update = async function () {
+  const packages = await exports.getPackages();
+  const parts = {}; // Key is full name. sortParts converts this into a topologically sorted array.
+  const plugins = {};
 
-exports.getPackages = function (cb) {
+  // Load plugin metadata ep.json
+  await Promise.all(Object.keys(packages).map(
+      async (pluginName) => await loadPlugin(packages, pluginName, plugins, parts)));
+
+  defs.plugins = plugins;
+  defs.parts = sortParts(parts);
+  defs.hooks = pluginUtils.extractHooks(defs.parts, 'hooks', exports.pathNormalization);
+  defs.loaded = true;
+  await callInit();
+};
+
+exports.getPackages = async function () {
   // Load list of installed NPM packages, flatten it to a list, and filter out only packages with names that
-  var dir = path.resolve(npm.dir, '..');
-  readInstalled(dir, function (er, data) {
-    if (er) cb(er, null);
-    var packages = {};
-    function flatten(deps) {
-      _.chain(deps).keys().each(function (name) {
-        if (name.indexOf(exports.prefix) === 0) {
-          packages[name] = _.clone(deps[name]);
-          // Delete anything that creates loops so that the plugin
-          // list can be sent as JSON to the web client
-          delete packages[name].dependencies;
-          delete packages[name].parent;
-        }
-      
-        // I don't think we need recursion
-        //if (deps[name].dependencies !== undefined) flatten(deps[name].dependencies);
-      });
-    }
-  
-    var tmp = {};
-    tmp[data.name] = data;
-    flatten(tmp[data.name].dependencies);
-    cb(null, packages);
-  });
+  const dir = settings.root;
+  const data = await util.promisify(readInstalled)(dir);
+
+  const packages = {};
+  function flatten(deps) {
+    _.chain(deps).keys().each((name) => {
+      if (name.indexOf(exports.prefix) === 0) {
+        packages[name] = _.clone(deps[name]);
+        // Delete anything that creates loops so that the plugin
+        // list can be sent as JSON to the web client
+        delete packages[name].dependencies;
+        delete packages[name].parent;
+      }
+
+      // I don't think we need recursion
+      // if (deps[name].dependencies !== undefined) flatten(deps[name].dependencies);
+    });
+  }
+
+  const tmp = {};
+  tmp[data.name] = data;
+  flatten(tmp[data.name].dependencies);
+  return packages;
 };
 
-function loadPlugin(packages, plugin_name, plugins, parts, cb) {
-  var plugin_path = path.resolve(packages[plugin_name].path, "ep.json");
-  fs.readFile(
-    plugin_path,
-    function (er, data) {
-      if (er) {
-        console.error("Unable to load plugin definition file " + plugin_path);
-        return cb();
-      }
-      try {
-        var plugin = JSON.parse(data);
-        plugin['package'] = packages[plugin_name];
-        plugins[plugin_name] = plugin;
-        _.each(plugin.parts, function (part) {
-          part.plugin = plugin_name;
-          part.full_name = plugin_name + "/" + part.name;
-          parts[part.full_name] = part;
-        });
-      } catch (ex) {
-        console.error("Unable to parse plugin definition file " + plugin_path + ": " + ex.toString());
-      }
-      cb();
+async function loadPlugin(packages, plugin_name, plugins, parts) {
+  const plugin_path = path.resolve(packages[plugin_name].path, 'ep.json');
+  try {
+    const data = await fs.readFile(plugin_path);
+    try {
+      const plugin = JSON.parse(data);
+      plugin.package = packages[plugin_name];
+      plugins[plugin_name] = plugin;
+      _.each(plugin.parts, (part) => {
+        part.plugin = plugin_name;
+        part.full_name = `${plugin_name}/${part.name}`;
+        parts[part.full_name] = part;
+      });
+    } catch (ex) {
+      console.error(`Unable to parse plugin definition file ${plugin_path}: ${ex.toString()}`);
     }
-  );
+  } catch (er) {
+    console.error(`Unable to load plugin definition file ${plugin_path}`);
+  }
 }
 
 function partsToParentChildList(parts) {
-  var res = [];
-  _.chain(parts).keys().forEach(function (name) {
-    _.each(parts[name].post || [], function (child_name)  {
+  const res = [];
+  _.chain(parts).keys().forEach((name) => {
+    _.each(parts[name].post || [], (child_name) => {
       res.push([name, child_name]);
     });
-    _.each(parts[name].pre || [], function (parent_name)  {
+    _.each(parts[name].pre || [], (parent_name) => {
       res.push([parent_name, name]);
     });
     if (!parts[name].pre && !parts[name].post) {
-      res.push([name, ":" + name]); // Include apps with no dependency info
+      res.push([name, `:${name}`]); // Include apps with no dependency info
     }
   });
   return res;
@@ -174,10 +150,10 @@ function partsToParentChildList(parts) {
 // Used only in Node, so no need for _
 function sortParts(parts) {
   return tsort(
-    partsToParentChildList(parts)
+      partsToParentChildList(parts)
   ).filter(
-    function (name) { return parts[name] !== undefined; }
+      (name) => parts[name] !== undefined
   ).map(
-    function (name) { return parts[name]; }
+      (name) => parts[name]
   );
 }

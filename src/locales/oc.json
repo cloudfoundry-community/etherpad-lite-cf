@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Cedric31"
+			"Cedric31",
+			"Quentí"
 		]
 	},
 	"index.newPad": "Pad novèl",
@@ -27,9 +28,7 @@
 	"pad.colorpicker.cancel": "Anullar",
 	"pad.loading": "Cargament...",
 	"pad.noCookie": "Lo cookie a pas pogut èsser trobat. Autorizatz los cookies dins vòstre navigador !",
-	"pad.passwordRequired": "Avètz besonh d'un senhal per accedir a aqueste Pad",
 	"pad.permissionDenied": "Vos es pas permés d’accedir a aqueste Pad.",
-	"pad.wrongPassword": "Senhal incorrècte",
 	"pad.settings.padSettings": "Paramètres del Pad",
 	"pad.settings.myView": "Ma vista",
 	"pad.settings.stickychat": "Afichar totjorn lo chat",
@@ -39,8 +38,6 @@
 	"pad.settings.rtlcheck": "Lectura de dreita a esquèrra",
 	"pad.settings.fontType": "Tipe de poliça :",
 	"pad.settings.fontType.normal": "Normal",
-	"pad.settings.fontType.monospaced": "Monospace",
-	"pad.settings.globalView": "Vista d’ensemble",
 	"pad.settings.language": "Lenga :",
 	"pad.importExport.import_export": "Importar/Exportar",
 	"pad.importExport.import": "Cargar un tèxte o un document",
@@ -86,6 +83,8 @@
 	"pad.chat": "Chat",
 	"pad.chat.title": "Dobrir lo chat associat a aqueste pad.",
 	"pad.chat.loadmessages": "Cargar mai de messatges.",
+	"pad.chat.stick.title": "Ancorar la discussion a l’ecran",
+	"pad.chat.writeMessage.placeholder": "Escrivètz lo vòstre messatge aicí",
 	"timeslider.pageTitle": "Istoric dinamic de {{appTitle}}",
 	"timeslider.toolbar.returnbutton": "Retorn a aqueste Pad.",
 	"timeslider.toolbar.authors": "Autors :",
@@ -115,9 +114,6 @@
 	"pad.savedrevs.timeslider": "Podètz veire las revisions enregistradas en visitant l’ascensor temporal",
 	"pad.userlist.entername": "Entratz vòstre nom",
 	"pad.userlist.unnamed": "sens nom",
-	"pad.userlist.guest": "Convidat",
-	"pad.userlist.deny": "Refusar",
-	"pad.userlist.approve": "Aprovar",
 	"pad.editbar.clearcolors": "Escafar las colors de paternitat dins tot lo document ?",
 	"pad.impexp.importbutton": "Importar ara",
 	"pad.impexp.importing": "Impòrt en cors...",

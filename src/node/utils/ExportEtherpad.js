@@ -15,58 +15,55 @@
  */
 
 
-var async = require("async");
-var db = require("../db/DB").db;
-var ERR = require("async-stacktrace");
+const db = require('../db/DB');
+const hooks = require('ep_etherpad-lite/static/js/pluginfw/hooks');
 
-exports.getPadRaw = function(padId, callback){
-  async.waterfall([
-  function(cb){
-    db.get("pad:"+padId, cb);
-  },
-  function(padcontent,cb){
-    var records = ["pad:"+padId];
-    for (var i = 0; i <= padcontent.head; i++) {
-      records.push("pad:"+padId+":revs:" + i);
-    }
+exports.getPadRaw = async function (padId) {
+  const padKey = `pad:${padId}`;
+  const padcontent = await db.get(padKey);
 
-    for (var i = 0; i <= padcontent.chatHead; i++) {
-      records.push("pad:"+padId+":chat:" + i);
-    }
-
-    var data = {};
-
-    async.forEachSeries(Object.keys(records), function(key, r){
-
-      // For each piece of info about a pad.
-      db.get(records[key], function(err, entry){
-        data[records[key]] = entry;
-
-        // Get the Pad Authors
-        if(entry.pool && entry.pool.numToAttrib){
-          var authors = entry.pool.numToAttrib;
-          async.forEachSeries(Object.keys(authors), function(k, c){
-            if(authors[k][0] === "author"){
-              var authorId = authors[k][1];
-
-              // Get the author info
-              db.get("globalAuthor:"+authorId, function(e, authorEntry){
-                if(authorEntry && authorEntry.padIDs) authorEntry.padIDs = padId;
-                if(!e) data["globalAuthor:"+authorId] = authorEntry;
-              });
-
-            }
-            // console.log("authorsK", authors[k]);
-            c(null);
-          });
-        }
-        r(null); // callback;
-      });
-    }, function(err){
-      cb(err, data);
-    })
+  const records = [padKey];
+  for (let i = 0; i <= padcontent.head; i++) {
+    records.push(`${padKey}:revs:${i}`);
   }
-  ], function(err, data){
-    callback(null, data);
-  });
-}
+
+  for (let i = 0; i <= padcontent.chatHead; i++) {
+    records.push(`${padKey}:chat:${i}`);
+  }
+
+  const data = {};
+  for (const key of records) {
+    // For each piece of info about a pad.
+    const entry = data[key] = await db.get(key);
+
+    // Get the Pad Authors
+    if (entry.pool && entry.pool.numToAttrib) {
+      const authors = entry.pool.numToAttrib;
+
+      for (const k of Object.keys(authors)) {
+        if (authors[k][0] === 'author') {
+          const authorId = authors[k][1];
+
+          // Get the author info
+          const authorEntry = await db.get(`globalAuthor:${authorId}`);
+          if (authorEntry) {
+            data[`globalAuthor:${authorId}`] = authorEntry;
+            if (authorEntry.padIDs) {
+              authorEntry.padIDs = padId;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // get content that has a different prefix IE comments:padId:foo
+  // a plugin would return something likle ['comments', 'cakes']
+  const prefixes = await hooks.aCallAll('exportEtherpadAdditionalContent');
+  await Promise.all(prefixes.map(async (prefix) => {
+    const key = `${prefix}:${padId}`;
+    data[key] = await db.get(key);
+  }));
+
+  return data;
+};

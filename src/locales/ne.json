@@ -1,9 +1,11 @@
 {
 	"@metadata": {
 		"authors": [
-			"सरोज कुमार ढकाल",
+			"Nirajan pant",
 			"Nirjal stha",
-			"राम प्रसाद जोशी"
+			"राम प्रसाद जोशी",
+			"सरोज कुमार ढकाल",
+			"हिमाल सुबेदी"
 		]
 	},
 	"index.newPad": "नयाँ प्याड",
@@ -26,10 +28,8 @@
 	"pad.toolbar.showusers.title": "यस प्याडमा रहेका प्रयोगकर्ता देखाउने",
 	"pad.colorpicker.save": "सङ्ग्रह गर्ने",
 	"pad.colorpicker.cancel": "रद्द",
-	"pad.loading": "लोड हुदैछ...",
-	"pad.passwordRequired": "यो प्यड खोल्न पासवर्ड चाहिन्छ",
+	"pad.loading": "खुल्दै छ…",
 	"pad.permissionDenied": "तपाईंलाई यो प्याड खोल्न अनुमति छैन",
-	"pad.wrongPassword": "तपाईंको पासवर्ड गलत थियो",
 	"pad.settings.padSettings": "प्याड सेटिङ्गहरू",
 	"pad.settings.myView": "मेरो दृष्य",
 	"pad.settings.stickychat": "पर्दामा सधै च्याट गर्ने",
@@ -37,11 +37,11 @@
 	"pad.settings.colorcheck": "लेखकीय रङ्ग",
 	"pad.settings.linenocheck": "हरफ संख्या",
 	"pad.settings.rtlcheck": "के सामग्री दाहिने देखि देब्रे पढ्ने हो ?",
-	"pad.settings.fontType": "फन्ट प्रकार:",
+	"pad.settings.fontType": "लिपि प्रकार:",
 	"pad.settings.fontType.normal": "सामान्य",
-	"pad.settings.fontType.monospaced": "मोनोस्पेस",
-	"pad.settings.globalView": "विश्वव्यापी दृष्य",
 	"pad.settings.language": "भाषा:",
+	"pad.settings.about": "बारेमा",
+	"pad.settings.poweredBy": "प्रवर्धक",
 	"pad.importExport.import_export": "आयात/निर्यात",
 	"pad.importExport.import": "कुनै पनि पाठ रहेको फाइल या कागजात अपलोड गर्नुहोस्",
 	"pad.importExport.importSuccessful": "सफल भयो!",
@@ -98,9 +98,6 @@
 	"pad.savedrevs.marked": "यस संस्करणलाई संग्रहितको रुपमा चिनो लगाइएको छैन",
 	"pad.userlist.entername": "तपाईंको नाम लेख्नुहोस्",
 	"pad.userlist.unnamed": "नाम नखुलाइएको",
-	"pad.userlist.guest": "पाहुना",
-	"pad.userlist.deny": "अस्वीकार गर्ने",
-	"pad.userlist.approve": "स्वीकृत गर्ने",
 	"pad.impexp.importbutton": "अहिले आयात गर्ने",
 	"pad.impexp.importing": "आयात गर्ने...",
 	"pad.impexp.uploadFailed": "अपलोड असफल भयो , कृपया पुन: प्रयास गर्नुहोस् ।",

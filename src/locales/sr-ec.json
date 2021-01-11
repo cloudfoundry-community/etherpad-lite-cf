@@ -1,12 +1,15 @@
 {
 	"@metadata": {
 		"authors": [
+			"Acamicamacaraca",
 			"Aktron",
+			"BadDog",
+			"Kizule",
 			"Milicevic01",
-			"Милан Јелисавчић",
-			"Srdjan m",
 			"Obsuser",
-			"Acamicamacaraca"
+			"Srdjan m",
+			"Srđan",
+			"Милан Јелисавчић"
 		]
 	},
 	"index.newPad": "Нови Пад",
@@ -32,9 +35,7 @@
 	"pad.colorpicker.cancel": "Откажи",
 	"pad.loading": "Учитавам…",
 	"pad.noCookie": "Колачић није пронађен. Молимо да укључите колачиће у вашем прегледавачу!",
-	"pad.passwordRequired": "Требате имати лозинку како бисте приступили овом паду",
 	"pad.permissionDenied": "Немате дозволу да приступите овом паду",
-	"pad.wrongPassword": "Ваша лозинка није исправна",
 	"pad.settings.padSettings": "Подешавања пада",
 	"pad.settings.myView": "Мој приказ",
 	"pad.settings.stickychat": "Ћаскање увек на екрану",
@@ -44,9 +45,9 @@
 	"pad.settings.rtlcheck": "Читај садржај с десна на лево?",
 	"pad.settings.fontType": "Врста фонта:",
 	"pad.settings.fontType.normal": "Нормално",
-	"pad.settings.fontType.monospaced": "Monospace",
-	"pad.settings.globalView": "Глобални приказ",
 	"pad.settings.language": "Језик:",
+	"pad.settings.about": "О пројекту",
+	"pad.settings.poweredBy": "Покреће",
 	"pad.importExport.import_export": "Увоз/извоз",
 	"pad.importExport.import": "Отпремите било коју текстуалну датотеку или документ",
 	"pad.importExport.importSuccessful": "Успешно!",
@@ -57,9 +58,9 @@
 	"pad.importExport.exportword": "Microsoft Word",
 	"pad.importExport.exportpdf": "PDF",
 	"pad.importExport.exportopen": "ODF (Open Document Format)",
-	"pad.importExport.abiword.innerHTML": "Једино можете увести са једноставног текстуалног формата или HTML формата. За компликованије функције о увозу, молимо да <a href=\"https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord\">инсталирате AbiWord</a>.",
+	"pad.importExport.abiword.innerHTML": "Једино можете увести са једноставног текстуалног формата или HTML формата. За компликованије функције о увозу, молимо да <a href=\"https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord\">инсталирате AbiWord или LibreOffice</a>.",
 	"pad.modals.connected": "Повезано.",
-	"pad.modals.reconnecting": "Поново се повезујем на ваш пад..",
+	"pad.modals.reconnecting": "Поново се повезујем на ваш пад...",
 	"pad.modals.forcereconnect": "Присилно се поново повежи",
 	"pad.modals.reconnecttimer": "Покушавам се поново повезати",
 	"pad.modals.cancel": "Откажи",
@@ -91,6 +92,8 @@
 	"pad.chat": "Ћаскање",
 	"pad.chat.title": "Отворите ћаскање за овај пад.",
 	"pad.chat.loadmessages": "Учитај више порука",
+	"pad.chat.stick.title": "Залепите ћаскање на екран",
+	"pad.chat.writeMessage.placeholder": "Напишите поруку овде",
 	"timeslider.pageTitle": "{{appTitle}} временска линија",
 	"timeslider.toolbar.returnbutton": "Врати се на пад",
 	"timeslider.toolbar.authors": "Аутори:",
@@ -120,10 +123,7 @@
 	"pad.savedrevs.timeslider": "Можете видети сачуване измене користећи се временском линијом",
 	"pad.userlist.entername": "Упишите своје име",
 	"pad.userlist.unnamed": "неименован",
-	"pad.userlist.guest": "Гост",
-	"pad.userlist.deny": "Одбиј",
-	"pad.userlist.approve": "Одобри",
-	"pad.editbar.clearcolors": "Очисти ауторске боје за цели документ?",
+	"pad.editbar.clearcolors": "Очисти ауторске боје за цели документ? Ово се не може поништити.",
 	"pad.impexp.importbutton": "Увези одмах",
 	"pad.impexp.importing": "Увозим...",
 	"pad.impexp.confirmimport": "Увоз датотеке ће преписати тренутни текст пада. Да ли сте сигурни да желите наставити?",
@@ -132,5 +132,6 @@
 	"pad.impexp.uploadFailed": "Нисам успео да отпремим, молимо покушате поново",
 	"pad.impexp.importfailed": "Нисам успео да увезем",
 	"pad.impexp.copypaste": "Копирајте и залепите",
-	"pad.impexp.exportdisabled": "Извоз у формату {{type}} није дозвољен. Контактирајте системског администратора за детаље."
+	"pad.impexp.exportdisabled": "Извоз у формату {{type}} није дозвољен. Контактирајте системског администратора за детаље.",
+	"pad.impexp.maxFileSize": "Датотека је превелика. Контактирајте администратора сајта да повећа допуштену величину датотеке за увоз."
 }

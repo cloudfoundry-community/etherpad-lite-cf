@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Copyright 2009 Google Inc., 2011 Peter 'Pita' Martischka (Primary Technology Ltd)
  *
@@ -14,208 +15,202 @@
  * limitations under the License.
  */
 
-var padutils = require('./pad_utils').padutils;
-var padcookie = require('./pad_cookie').padcookie;
-var Tinycon = require('tinycon/tinycon');
-var hooks = require('./pluginfw/hooks');
-var padeditor = require('./pad_editor').padeditor;
+const padutils = require('./pad_utils').padutils;
+const padcookie = require('./pad_cookie').padcookie;
+const Tinycon = require('tinycon/tinycon');
+const hooks = require('./pluginfw/hooks');
+const padeditor = require('./pad_editor').padeditor;
 
-var chat = (function()
-{
-  var isStuck = false;
-  var userAndChat = false;
-  var gotInitialMessages = false;
-  var historyPointer = 0;
-  var chatMentions = 0;
-  var self = {
-    show: function () 
-    {      
-      $("#chaticon").hide();
-      $("#chatbox").show();
-      $("#gritter-notice-wrapper").hide();
-      self.scrollDown();
+exports.chat = (() => {
+  let isStuck = false;
+  let userAndChat = false;
+  let chatMentions = 0;
+  return {
+    show() {
+      $('#chaticon').removeClass('visible');
+      $('#chatbox').addClass('visible');
+      this.scrollDown(true);
       chatMentions = 0;
       Tinycon.setBubble(0);
+      $('.chat-gritter-msg').each(function () {
+        $.gritter.remove(this.id);
+      });
     },
-    focus: function () 
-    {
-      setTimeout(function(){
-        $("#chatinput").focus();
-      },100);
+    focus: () => {
+      setTimeout(() => {
+        $('#chatinput').focus();
+      }, 100);
     },
-    stickToScreen: function(fromInitialCall) // Make chat stick to right hand side of screen
-    {
-      chat.show();
-      if(!isStuck || fromInitialCall) { // Stick it to
-        padcookie.setPref("chatAlwaysVisible", true);
-        $('#chatbox').addClass("stickyChat");
-        $('#titlesticky').hide();
-        $('#editorcontainer').css({"right":"192px"});
-        $('.stickyChat').css("top",$('#editorcontainer').offset().top+"px");
-        isStuck = true;
-      } else { // Unstick it
-        padcookie.setPref("chatAlwaysVisible", false);
-        $('.stickyChat').css("top", "auto");
-        $('#chatbox').removeClass("stickyChat");
-        $('#titlesticky').show();
-        $('#editorcontainer').css({"right":"0px"});
-        isStuck = false;
+    // Make chat stick to right hand side of screen
+    stickToScreen(fromInitialCall) {
+      if (pad.settings.hideChat) {
+        return;
       }
+      this.show();
+      isStuck = (!isStuck || fromInitialCall);
+      $('#chatbox').hide();
+      // Add timeout to disable the chatbox animations
+      setTimeout(() => {
+        $('#chatbox, .sticky-container').toggleClass('stickyChat', isStuck);
+        $('#chatbox').css('display', 'flex');
+      }, 0);
+
+      padcookie.setPref('chatAlwaysVisible', isStuck);
+      $('#options-stickychat').prop('checked', isStuck);
     },
-    chatAndUsers: function(fromInitialCall)
-    {
-      var toEnable = $('#options-chatandusers').is(":checked");
-      if(toEnable || !userAndChat || fromInitialCall){
-        padcookie.setPref("chatAndUsers", true);
-        chat.stickToScreen(true);
-        $('#options-stickychat').prop('checked', true)
-        $('#options-chatandusers').prop('checked', true)
-        $('#options-stickychat').prop("disabled", "disabled");
-        $('#users').addClass("chatAndUsers");
-        $("#chatbox").addClass("chatAndUsersChat");
-        // redraw
+    chatAndUsers(fromInitialCall) {
+      const toEnable = $('#options-chatandusers').is(':checked');
+      if (toEnable || !userAndChat || fromInitialCall) {
+        this.stickToScreen(true);
+        $('#options-stickychat').prop('checked', true);
+        $('#options-chatandusers').prop('checked', true);
+        $('#options-stickychat').prop('disabled', 'disabled');
         userAndChat = true;
-        padeditbar.redrawHeight()
-      }else{
-        padcookie.setPref("chatAndUsers", false);
-        $('#options-stickychat').prop("disabled", false);
-        $('#users').removeClass("chatAndUsers");
-        $("#chatbox").removeClass("chatAndUsersChat");
+      } else {
+        $('#options-stickychat').prop('disabled', false);
+        userAndChat = false;
       }
+      padcookie.setPref('chatAndUsers', userAndChat);
+      $('#users, .sticky-container')
+          .toggleClass('chatAndUsers popup-show stickyUsers', userAndChat);
+      $('#chatbox').toggleClass('chatAndUsersChat', userAndChat);
     },
-    hide: function () 
-    {
-      // decide on hide logic based on chat window being maximized or not 
+    hide() {
+      // decide on hide logic based on chat window being maximized or not
       if ($('#options-stickychat').prop('checked')) {
-        chat.stickToScreen();
+        this.stickToScreen();
         $('#options-stickychat').prop('checked', false);
-      }
-      else {  
-        $("#chatcounter").text("0");
-        $("#chaticon").show();
-        $("#chatbox").hide();
-        $.gritter.removeAll();
-        $("#gritter-notice-wrapper").show();
+      } else {
+        $('#chatcounter').text('0');
+        $('#chaticon').addClass('visible');
+        $('#chatbox').removeClass('visible');
       }
     },
-    scrollDown: function()
-    {
-      if($('#chatbox').css("display") != "none"){
-        if(!self.lastMessage || !self.lastMessage.position() || self.lastMessage.position().top < $('#chattext').height()) {
-          // if we use a slow animate here we can have a race condition when a users focus can not be moved away
-          // from the last message recieved.
-          $('#chattext').animate({scrollTop: $('#chattext')[0].scrollHeight}, { duration: 400, queue: false });
-          self.lastMessage = $('#chattext > p').eq(-1);
+    scrollDown(force) {
+      if ($('#chatbox').hasClass('visible')) {
+        if (force || !this.lastMessage || !this.lastMessage.position() ||
+            this.lastMessage.position().top < ($('#chattext').outerHeight() + 20)) {
+          // if we use a slow animate here we can have a race condition
+          // when a users focus can not be moved away from the last message recieved.
+          $('#chattext').animate(
+              {scrollTop: $('#chattext')[0].scrollHeight},
+              {duration: 400, queue: false});
+          this.lastMessage = $('#chattext > p').eq(-1);
         }
       }
-    }, 
-    send: function()
-    {
-      var text = $("#chatinput").val();
-      if(text.replace(/\s+/,'').length == 0)
-        return;
-      this._pad.collabClient.sendMessage({"type": "CHAT_MESSAGE", "text": text});
-      $("#chatinput").val("");
     },
-    addMessage: function(msg, increment, isHistoryAdd)
-    {
-      //correct the time
+    send() {
+      const text = $('#chatinput').val();
+      if (text.replace(/\s+/, '').length === 0) return;
+      this._pad.collabClient.sendMessage({type: 'CHAT_MESSAGE', text});
+      $('#chatinput').val('');
+    },
+    addMessage(msg, increment, isHistoryAdd) {
+      // correct the time
       msg.time += this._pad.clientTimeOffset;
-      
-      //create the time string
-      var minutes = "" + new Date(msg.time).getMinutes();
-      var hours = "" + new Date(msg.time).getHours();
-      if(minutes.length == 1)
-        minutes = "0" + minutes ;
-      if(hours.length == 1)
-        hours = "0" + hours ;
-      var timeStr = hours + ":" + minutes;
-        
-      //create the authorclass
-      var authorClass = "author-" + msg.userId.replace(/[^a-y0-9]/g, function(c)
-      {
-        if (c == ".") return "-";
-        return 'z' + c.charCodeAt(0) + 'z';
-      });
 
-      var text = padutils.escapeHtmlWithClickableLinks(msg.text, "_blank");
+      // create the time string
+      let minutes = `${new Date(msg.time).getMinutes()}`;
+      let hours = `${new Date(msg.time).getHours()}`;
+      if (minutes.length === 1) minutes = `0${minutes}`;
+      if (hours.length === 1) hours = `0${hours}`;
+      const timeStr = `${hours}:${minutes}`;
 
-      var authorName = msg.userName == null ? _('pad.userlist.unnamed') : padutils.escapeHtml(msg.userName);
-
-      // the hook args
-      var ctx = {
-        "authorName" : authorName,
-        "author" : msg.userId,
-        "text" : text,
-        "sticky" : false,
-        "timestamp" : msg.time,
-        "timeStr" : timeStr
+      // create the authorclass
+      if (!msg.userId) {
+        /*
+         * If, for a bug or a database corruption, the message coming from the
+         * server does not contain the userId field (see for example #3731),
+         * let's be defensive and replace it with "unknown".
+         */
+        msg.userId = 'unknown';
+        console.warn(
+            'The "userId" field of a chat message coming from the server was not present. ' +
+            'Replacing with "unknown". This may be a bug or a database corruption.');
       }
 
+      const authorClass = `author-${msg.userId.replace(/[^a-y0-9]/g, (c) => {
+        if (c === '.') return '-';
+        return `z${c.charCodeAt(0)}z`;
+      })}`;
+
+      const text = padutils.escapeHtmlWithClickableLinks(msg.text, '_blank');
+
+      const authorName = msg.userName == null ? html10n.get('pad.userlist.unnamed')
+        : padutils.escapeHtml(msg.userName);
+
+      // the hook args
+      const ctx = {
+        authorName,
+        author: msg.userId,
+        text,
+        sticky: false,
+        timestamp: msg.time,
+        timeStr,
+        duration: 4000,
+      };
+
       // is the users focus already in the chatbox?
-      var alreadyFocused = $("#chatinput").is(":focus");
+      const alreadyFocused = $('#chatinput').is(':focus');
 
       // does the user already have the chatbox open?
-      var chatOpen = $("#chatbox").is(":visible");
+      const chatOpen = $('#chatbox').hasClass('visible');
 
       // does this message contain this user's name? (is the curretn user mentioned?)
-      var myName = $('#myusernameedit').val();
-      var wasMentioned = (text.toLowerCase().indexOf(myName.toLowerCase()) !== -1 && myName != "undefined");
+      const myName = $('#myusernameedit').val();
+      const wasMentioned =
+          text.toLowerCase().indexOf(myName.toLowerCase()) !== -1 && myName !== 'undefined';
 
-      if(wasMentioned && !alreadyFocused && !isHistoryAdd && !chatOpen)
-      { // If the user was mentioned show for twice as long and flash the browser window
+      // If the user was mentioned, make the message sticky
+      if (wasMentioned && !alreadyFocused && !isHistoryAdd && !chatOpen) {
         chatMentions++;
         Tinycon.setBubble(chatMentions);
         ctx.sticky = true;
       }
 
       // Call chat message hook
-      hooks.aCallAll("chatNewMessage", ctx, function() {
+      hooks.aCallAll('chatNewMessage', ctx, () => {
+        const html =
+            `<p data-authorId='${msg.userId}' class='${authorClass}'><b>${authorName}:</b>` +
+            `<span class='time ${authorClass}'>${ctx.timeStr}</span> ${ctx.text}</p>`;
+        if (isHistoryAdd) $(html).insertAfter('#chatloadmessagesbutton');
+        else $('#chattext').append(html);
 
-        var html = "<p data-authorId='" + msg.userId + "' class='" + authorClass + "'><b>" + authorName + ":</b><span class='time " + authorClass + "'>" + ctx.timeStr + "</span> " + ctx.text + "</p>";
-        if(isHistoryAdd)
-          $(html).insertAfter('#chatloadmessagesbutton');
-        else
-          $("#chattext").append(html);
-
-        //should we increment the counter??
-        if(increment && !isHistoryAdd)
-        {
+        // should we increment the counter??
+        if (increment && !isHistoryAdd) {
           // Update the counter of unread messages
-          var count = Number($("#chatcounter").text());
+          let count = Number($('#chatcounter').text());
           count++;
-          $("#chatcounter").text(count);
+          $('#chatcounter').text(count);
 
-          if(!chatOpen) {
+          if (!chatOpen && ctx.duration > 0) {
             $.gritter.add({
-              // (string | mandatory) the heading of the notification
-              title: ctx.authorName,
-              // (string | mandatory) the text inside the notification
-              text: ctx.text,
-              // (bool | optional) if you want it to fade out on its own or just sit there
+              // Note: ctx.authorName and ctx.text are already HTML-escaped.
+              text: $('<p>')
+                  .append($('<span>').addClass('author-name').html(ctx.authorName))
+                  .append(ctx.text),
               sticky: ctx.sticky,
-              // (int | optional) the time you want it to be alive for before fading out
-              time: '4000'
+              time: 5000,
+              position: 'bottom',
+              class_name: 'chat-gritter-msg',
             });
           }
         }
       });
 
       // Clear the chat mentions when the user clicks on the chat input box
-      $('#chatinput').click(function(){
+      $('#chatinput').click(() => {
         chatMentions = 0;
         Tinycon.setBubble(0);
       });
-      if(!isHistoryAdd)
-        self.scrollDown();
+      if (!isHistoryAdd) this.scrollDown();
     },
-    init: function(pad)
-    {
+    init(pad) {
       this._pad = pad;
-      $("#chatinput").on("keydown", function(evt){
+      $('#chatinput').on('keydown', (evt) => {
         // If the event is Alt C or Escape & we're already in the chat menu
         // Send the users focus back to the pad
-        if((evt.altKey == true && evt.which === 67) || evt.which === 27){
+        if ((evt.altKey === true && evt.which === 67) || evt.which === 27) {
           // If we're in chat already..
           $(':focus').blur(); // required to do not try to remove!
           padeditor.ace.focus(); // Sends focus back to pad
@@ -224,47 +219,40 @@ var chat = (function()
         }
       });
 
-      $('body:not(#chatinput)').on("keypress", function(evt){
-        if (evt.altKey && evt.which == 67){
+      const self = this;
+      $('body:not(#chatinput)').on('keypress', function (evt) {
+        if (evt.altKey && evt.which === 67) {
           // Alt c focuses on the Chat window
           $(this).blur();
-          chat.show();
-          $("#chatinput").focus();
+          self.show();
+          $('#chatinput').focus();
           evt.preventDefault();
         }
       });
 
-      $("#chatinput").keypress(function(evt){
-        //if the user typed enter, fire the send
-        if(evt.which == 13 || evt.which == 10)
-        {
+      $('#chatinput').keypress((evt) => {
+        // if the user typed enter, fire the send
+        if (evt.which === 13 || evt.which === 10) {
           evt.preventDefault();
-          self.send();
+          this.send();
         }
       });
 
       // initial messages are loaded in pad.js' _afterHandshake
 
-      $("#chatcounter").text(0);
-      $("#chatloadmessagesbutton").click(function()
-      {
-        var start = Math.max(self.historyPointer - 20, 0);
-        var end = self.historyPointer;
+      $('#chatcounter').text(0);
+      $('#chatloadmessagesbutton').click(() => {
+        const start = Math.max(this.historyPointer - 20, 0);
+        const end = this.historyPointer;
 
-        if(start == end) // nothing to load
-          return;
+        if (start === end) return; // nothing to load
 
-        $("#chatloadmessagesbutton").css("display", "none");
-        $("#chatloadmessagesball").css("display", "block");
+        $('#chatloadmessagesbutton').css('display', 'none');
+        $('#chatloadmessagesball').css('display', 'block');
 
-        pad.collabClient.sendMessage({"type": "GET_CHAT_MESSAGES", "start": start, "end": end});
-        self.historyPointer = start;
+        pad.collabClient.sendMessage({type: 'GET_CHAT_MESSAGES', start, end});
+        this.historyPointer = start;
       });
-    }
-  }
-
-  return self;
-}());
-
-exports.chat = chat;
-
+    },
+  };
+})();

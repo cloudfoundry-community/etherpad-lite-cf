@@ -1,11 +1,11 @@
 {
 	"@metadata": {
 		"authors": [
-			"Teslaton",
 			"Kusavica",
-			"Rudko",
+			"Lexected",
 			"Mark",
-			"Lexected"
+			"Rudko",
+			"Teslaton"
 		]
 	},
 	"index.newPad": "Nový Pad",
@@ -31,9 +31,7 @@
 	"pad.colorpicker.cancel": "Zrušiť",
 	"pad.loading": "Načítava sa...",
 	"pad.noCookie": "Cookie nebolo možné nájsť. Povoľte prosím cookies vo vašom prehliadači.",
-	"pad.passwordRequired": "Prístup k tomuto Padu je chránený heslom",
 	"pad.permissionDenied": "Ľutujeme, nemáte oprávnenie pristupovať k tomuto Padu",
-	"pad.wrongPassword": "Nesprávne heslo",
 	"pad.settings.padSettings": "Nastavenia Padu",
 	"pad.settings.myView": "Vlastný pohľad",
 	"pad.settings.stickychat": "Chat stále na obrazovke",
@@ -43,8 +41,6 @@
 	"pad.settings.rtlcheck": "Čítať obsah sprava doľava?",
 	"pad.settings.fontType": "Typ písma:",
 	"pad.settings.fontType.normal": "Normálne",
-	"pad.settings.fontType.monospaced": "Strojové",
-	"pad.settings.globalView": "Globálny pohľad",
 	"pad.settings.language": "Jazyk:",
 	"pad.importExport.import_export": "Import/Export",
 	"pad.importExport.import": "Nahrať ľubovoľný textový súbor alebo dokument",
@@ -119,9 +115,6 @@
 	"pad.savedrevs.timeslider": "Návštevou časovej osi môžete zobraziť uložené revízie",
 	"pad.userlist.entername": "Zadajte svoje meno",
 	"pad.userlist.unnamed": "nemenovaný",
-	"pad.userlist.guest": "Hosť",
-	"pad.userlist.deny": "Zakázať",
-	"pad.userlist.approve": "Schváliť",
 	"pad.editbar.clearcolors": "Skutočne odstrániť autorské farby z celého dokumentu?",
 	"pad.impexp.importbutton": "Importovať",
 	"pad.impexp.importing": "Prebieha import...",

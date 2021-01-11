@@ -1,6 +1,6 @@
 .idea
 node_modules
-settings.json
+/settings.json
 !settings.json.template
 APIKEY.txt
 SESSIONKEY.txt
@@ -11,7 +11,6 @@ var/dirty.db
 bin/convertSettings.json
 *~
 *.patch
-src/static/js/jquery.js
 npm-debug.log
 *.DS_Store
 .ep_initialized
@@ -21,3 +20,6 @@ bin/etherpad-1.deb
 *.iml
 credentials.json
 out/
+.nyc_output
+./package-lock.json
+.idea

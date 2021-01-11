@@ -1,5 +1,6 @@
+'use strict';
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -20,243 +21,158 @@
  * limitations under the License.
  */
 
- // These parameters were global, now they are injected. A reference to the
- // Timeslider controller would probably be more appropriate.
-var _ = require('./underscore');
-var padmodals = require('./pad_modals').padmodals;
+// These parameters were global, now they are injected. A reference to the
+// Timeslider controller would probably be more appropriate.
+const _ = require('./underscore');
+const padmodals = require('./pad_modals').padmodals;
+const colorutils = require('./colorutils').colorutils;
 
-function loadBroadcastSliderJS(fireWhenAllScriptsAreLoaded)
-{
-  var BroadcastSlider;
+const loadBroadcastSliderJS = (fireWhenAllScriptsAreLoaded) => {
+  let BroadcastSlider;
 
   // Hack to ensure timeslider i18n values are in
-  $("[data-key='timeslider_returnToPad'] > a > span").html(html10n.get("timeslider.toolbar.returnbutton"));
+  $("[data-key='timeslider_returnToPad'] > a > span").html(
+      html10n.get('timeslider.toolbar.returnbutton'));
 
-  (function()
-  { // wrap this code in its own namespace
-    var sliderLength = 1000;
-    var sliderPos = 0;
-    var sliderActive = false;
-    var slidercallbacks = [];
-    var savedRevisions = [];
-    var sliderPlaying = false;
+  (() => { // wrap this code in its own namespace
+    let sliderLength = 1000;
+    let sliderPos = 0;
+    let sliderActive = false;
+    const slidercallbacks = [];
+    const savedRevisions = [];
+    let sliderPlaying = false;
 
-    function disableSelection(element)
-    {
-      element.onselectstart = function()
-      {
-        return false;
-      };
-      element.unselectable = "on";
-      element.style.MozUserSelect = "none";
-      element.style.cursor = "default";
-    }
-    var _callSliderCallbacks = function(newval)
-      {
-        sliderPos = newval;
-        for (var i = 0; i < slidercallbacks.length; i++)
-        {
-          slidercallbacks[i](newval);
-        }
+    const _callSliderCallbacks = (newval) => {
+      sliderPos = newval;
+      for (let i = 0; i < slidercallbacks.length; i++) {
+        slidercallbacks[i](newval);
       }
-        
-    var updateSliderElements = function()
-      {
-        for (var i = 0; i < savedRevisions.length; i++)
-        {
-          var position = parseInt(savedRevisions[i].attr('pos'));
-          savedRevisions[i].css('left', (position * ($("#ui-slider-bar").width() - 2) / (sliderLength * 1.0)) - 1);
-        }
-        $("#ui-slider-handle").css('left', sliderPos * ($("#ui-slider-bar").width() - 2) / (sliderLength * 1.0));
-      }  
+    };
 
-    var addSavedRevision = function(position, info)
-      {
-        var newSavedRevision = $('<div></div>');
-        newSavedRevision.addClass("star");
+    const updateSliderElements = () => {
+      for (let i = 0; i < savedRevisions.length; i++) {
+        const position = parseInt(savedRevisions[i].attr('pos'));
+        savedRevisions[i].css(
+            'left', (position * ($('#ui-slider-bar').width() - 2) / (sliderLength * 1.0)) - 1);
+      }
+      $('#ui-slider-handle').css(
+          'left', sliderPos * ($('#ui-slider-bar').width() - 2) / (sliderLength * 1.0));
+    };
 
-        newSavedRevision.attr('pos', position);
-        newSavedRevision.css('position', 'absolute');
-        newSavedRevision.css('left', (position * ($("#ui-slider-bar").width() - 2) / (sliderLength * 1.0)) - 1);
-        $("#timeslider-slider").append(newSavedRevision);
-        newSavedRevision.mouseup(function(evt)
-        {
-          BroadcastSlider.setSliderPosition(position);
-        });
-        savedRevisions.push(newSavedRevision);
-      };
+    const addSavedRevision = (position, info) => {
+      const newSavedRevision = $('<div></div>');
+      newSavedRevision.addClass('star');
 
-    var removeSavedRevision = function(position)
-      {
-        var element = $("div.star [pos=" + position + "]");
-        savedRevisions.remove(element);
-        element.remove();
-        return element;
-      };
+      newSavedRevision.attr('pos', position);
+      newSavedRevision.css(
+          'left', (position * ($('#ui-slider-bar').width() - 2) / (sliderLength * 1.0)) - 1);
+      $('#ui-slider-bar').append(newSavedRevision);
+      newSavedRevision.mouseup((evt) => {
+        BroadcastSlider.setSliderPosition(position);
+      });
+      savedRevisions.push(newSavedRevision);
+    };
 
     /* Begin small 'API' */
 
-    function onSlider(callback)
-    {
+    const onSlider = (callback) => {
       slidercallbacks.push(callback);
-    }
+    };
 
-    function getSliderPosition()
-    {
-      return sliderPos;
-    }
+    const getSliderPosition = () => sliderPos;
 
-    function setSliderPosition(newpos)
-    {
+    const setSliderPosition = (newpos) => {
       newpos = Number(newpos);
       if (newpos < 0 || newpos > sliderLength) return;
-      if(!newpos){
+      if (!newpos) {
         newpos = 0; // stops it from displaying NaN if newpos isn't set
       }
-      window.location.hash = "#" + newpos;
-      $("#ui-slider-handle").css('left', newpos * ($("#ui-slider-bar").width() - 2) / (sliderLength * 1.0));
-      $("a.tlink").map(function()
-      {
-        $(this).attr('href', $(this).attr('thref').replace("%revision%", newpos));
+      window.location.hash = `#${newpos}`;
+      $('#ui-slider-handle').css(
+          'left', newpos * ($('#ui-slider-bar').width() - 2) / (sliderLength * 1.0));
+      $('a.tlink').map(function () {
+        $(this).attr('href', $(this).attr('thref').replace('%revision%', newpos));
       });
 
-      $("#revision_label").html(html10n.get("timeslider.version", { "version": newpos}));
+      $('#revision_label').html(html10n.get('timeslider.version', {version: newpos}));
 
-      if (newpos == 0)
-      {
-        $("#leftstar").css('opacity', .5);
-        $("#leftstep").css('opacity', .5);
-      }
-      else
-      {
-        $("#leftstar").css('opacity', 1);
-        $("#leftstep").css('opacity', 1);
-      }
-
-      if (newpos == sliderLength)
-      {
-        $("#rightstar").css('opacity', .5);
-        $("#rightstep").css('opacity', .5);
-      }
-      else
-      {
-        $("#rightstar").css('opacity', 1);
-        $("#rightstep").css('opacity', 1);
-      }
+      $('#leftstar, #leftstep').toggleClass('disabled', newpos === 0);
+      $('#rightstar, #rightstep').toggleClass('disabled', newpos === sliderLength);
 
       sliderPos = newpos;
       _callSliderCallbacks(newpos);
-    }
+    };
 
-    function getSliderLength()
-    {
-      return sliderLength;
-    }
+    const getSliderLength = () => sliderLength;
 
-    function setSliderLength(newlength)
-    {
+    const setSliderLength = (newlength) => {
       sliderLength = newlength;
       updateSliderElements();
-    }
+    };
 
     // just take over the whole slider screen with a reconnect message
 
-    function showReconnectUI()
-    {
-      padmodals.showModal("disconnected");
-    }
+    const showReconnectUI = () => {
+      padmodals.showModal('disconnected');
+    };
 
-    // Throttle seems like overkill here...  Not sure why we do it!
-    var fixPadHeight = _.throttle(function(){
-      var height = $('#timeslider-top').height();
-      $('#editorcontainerbox').css({marginTop: height});
-    }, 600);
-    
-    function setAuthors(authors)
-    {
-      var authorsList = $("#authorsList");
+    const setAuthors = (authors) => {
+      const authorsList = $('#authorsList');
       authorsList.empty();
-      var numAnonymous = 0;
-      var numNamed = 0;
-      var colorsAnonymous = [];
-      _.each(authors, function(author)
-      {
-        if(author)
-        {
-          var authorColor = clientVars.colorPalette[author.colorId] || author.colorId;
-          if (author.name)
-          {
+      let numAnonymous = 0;
+      let numNamed = 0;
+      const colorsAnonymous = [];
+      _.each(authors, (author) => {
+        if (author) {
+          const authorColor = clientVars.colorPalette[author.colorId] || author.colorId;
+          if (author.name) {
             if (numNamed !== 0) authorsList.append(', ');
-            
+            const textColor =
+                colorutils.textColorFromBackgroundColor(authorColor, clientVars.skinName);
             $('<span />')
-              .text(author.name || "unnamed")
-              .css('background-color', authorColor)
-              .addClass('author')
-              .appendTo(authorsList);
+                .text(author.name || 'unnamed')
+                .css('background-color', authorColor)
+                .css('color', textColor)
+                .addClass('author')
+                .appendTo(authorsList);
 
             numNamed++;
-          }
-          else
-          {
+          } else {
             numAnonymous++;
-            if(authorColor) colorsAnonymous.push(authorColor);
+            if (authorColor) colorsAnonymous.push(authorColor);
           }
         }
       });
-      if (numAnonymous > 0)
-      {
-        var anonymousAuthorString = html10n.get("timeslider.unnamedauthors", { num: numAnonymous });
-        
-        if (numNamed !== 0){
-          authorsList.append(' + ' + anonymousAuthorString);
+      if (numAnonymous > 0) {
+        const anonymousAuthorString = html10n.get('timeslider.unnamedauthors', {num: numAnonymous});
+
+        if (numNamed !== 0) {
+          authorsList.append(` + ${anonymousAuthorString}`);
         } else {
           authorsList.append(anonymousAuthorString);
         }
-        
-        if(colorsAnonymous.length > 0){
+
+        if (colorsAnonymous.length > 0) {
           authorsList.append(' (');
-          _.each(colorsAnonymous, function(color, i){
-            if( i > 0 ) authorsList.append(' '); 
+          _.each(colorsAnonymous, (color, i) => {
+            if (i > 0) authorsList.append(' ');
             $('<span>&nbsp;</span>')
-              .css('background-color', color)
-              .addClass('author author-anonymous')
-              .appendTo(authorsList);
+                .css('background-color', color)
+                .addClass('author author-anonymous')
+                .appendTo(authorsList);
           });
           authorsList.append(')');
         }
-        
       }
-      if (authors.length == 0)
-      {
-        authorsList.append(html10n.get("timeslider.toolbar.authorsList"));
+      if (authors.length === 0) {
+        authorsList.append(html10n.get('timeslider.toolbar.authorsList'));
       }
-      
-      fixPadHeight();
-    }
+    };
 
-    BroadcastSlider = {
-      onSlider: onSlider,
-      getSliderPosition: getSliderPosition,
-      setSliderPosition: setSliderPosition,
-      getSliderLength: getSliderLength,
-      setSliderLength: setSliderLength,
-      isSliderActive: function()
-      {
-        return sliderActive;
-      },
-      playpause: playpause,
-      addSavedRevision: addSavedRevision,
-      showReconnectUI: showReconnectUI,
-      setAuthors: setAuthors
-    }
-
-    function playButtonUpdater()
-    {
-      if (sliderPlaying)
-      {
-        if (getSliderPosition() + 1 > sliderLength)
-        {
-          $("#playpause_button_icon").toggleClass('pause');
+    const playButtonUpdater = () => {
+      if (sliderPlaying) {
+        if (getSliderPosition() + 1 > sliderLength) {
+          $('#playpause_button_icon').toggleClass('pause');
           sliderPlaying = false;
           return;
         }
@@ -264,239 +180,163 @@ function loadBroadcastSliderJS(fireWhenAllScriptsAreLoaded)
 
         setTimeout(playButtonUpdater, 100);
       }
-    }
+    };
 
-    function playpause()
-    {
-      $("#playpause_button_icon").toggleClass('pause');
+    const playpause = () => {
+      $('#playpause_button_icon').toggleClass('pause');
 
-      if (!sliderPlaying)
-      {
-        if (getSliderPosition() == sliderLength) setSliderPosition(0);
+      if (!sliderPlaying) {
+        if (getSliderPosition() === sliderLength) setSliderPosition(0);
         sliderPlaying = true;
         playButtonUpdater();
-      }
-      else
-      {
+      } else {
         sliderPlaying = false;
       }
-    }
+    };
+
+    BroadcastSlider = {
+      onSlider,
+      getSliderPosition,
+      setSliderPosition,
+      getSliderLength,
+      setSliderLength,
+      isSliderActive: () => sliderActive,
+      playpause,
+      addSavedRevision,
+      showReconnectUI,
+      setAuthors,
+    };
 
     // assign event handlers to html UI elements after page load
-    //$(window).load(function ()
-    fireWhenAllScriptsAreLoaded.push(function()
-    {
-      disableSelection($("#playpause_button")[0]);
-      disableSelection($("#timeslider")[0]);
-      
-      $(document).keyup(function(e)
-      {
-        // If focus is on editbar, don't do anything
-        var target = $(':focus');
-        if($(target).parents(".toolbar").length === 1){
-            return;
-        }
-        var code = -1;
-        if (!e) var e = window.event;
-        if (e.keyCode) code = e.keyCode;
-        else if (e.which) code = e.which;
+    fireWhenAllScriptsAreLoaded.push(() => {
+      $(document).keyup((e) => {
+        if (!e) e = window.event;
+        const code = e.keyCode || e.which;
 
-        if (code == 37)
-        { // left
-          if (!e.shiftKey)
-          {
-            setSliderPosition(getSliderPosition() - 1);
+        if (code === 37) { // left
+          if (e.shiftKey) {
+            $('#leftstar').click();
+          } else {
+            $('#leftstep').click();
           }
-          else
-          {
-            var nextStar = 0; // default to first revision in document
-            for (var i = 0; i < savedRevisions.length; i++)
-            {
-              var pos = parseInt(savedRevisions[i].attr('pos'));
-              if (pos < getSliderPosition() && nextStar < pos) nextStar = pos;
-            }
-            setSliderPosition(nextStar);
+        } else if (code === 39) { // right
+          if (e.shiftKey) {
+            $('#rightstar').click();
+          } else {
+            $('#rightstep').click();
           }
+        } else if (code === 32) { // spacebar
+          $('#playpause_button_icon').trigger('click');
         }
-        else if (code == 39)
-        {
-          if (!e.shiftKey)
-          {
-            setSliderPosition(getSliderPosition() + 1);
-          }
-          else
-          {
-            var nextStar = sliderLength; // default to last revision in document
-            for (var i = 0; i < savedRevisions.length; i++)
-            {
-              var pos = parseInt(savedRevisions[i].attr('pos'));
-              if (pos > getSliderPosition() && nextStar > pos) nextStar = pos;
-            }
-            setSliderPosition(nextStar);
-          }
-        }
-        else if (code == 32) playpause();
       });
-      
-      $(window).resize(function()
-      {
+
+      // Resize
+      $(window).resize(() => {
         updateSliderElements();
       });
 
-      $("#ui-slider-bar").mousedown(function(evt)
-      {
-        $("#ui-slider-handle").css('left', (evt.clientX - $("#ui-slider-bar").offset().left));
-        $("#ui-slider-handle").trigger(evt);
+      // Slider click
+      $('#ui-slider-bar').mousedown((evt) => {
+        $('#ui-slider-handle').css('left', (evt.clientX - $('#ui-slider-bar').offset().left));
+        $('#ui-slider-handle').trigger(evt);
       });
 
       // Slider dragging
-      $("#ui-slider-handle").mousedown(function(evt)
-      {
+      $('#ui-slider-handle').mousedown(function (evt) {
         this.startLoc = evt.clientX;
         this.currentLoc = parseInt($(this).css('left'));
-        var self = this;
         sliderActive = true;
-        $(document).mousemove(function(evt2)
-        {
-          $(self).css('pointer', 'move')
-          var newloc = self.currentLoc + (evt2.clientX - self.startLoc);
+        $(document).mousemove((evt2) => {
+          $(this).css('pointer', 'move');
+          let newloc = this.currentLoc + (evt2.clientX - this.startLoc);
           if (newloc < 0) newloc = 0;
-          if (newloc > ($("#ui-slider-bar").width() - 2)) newloc = ($("#ui-slider-bar").width() - 2);
-          $("#revision_label").html(html10n.get("timeslider.version", { "version": Math.floor(newloc * sliderLength / ($("#ui-slider-bar").width() - 2))}));
-          $(self).css('left', newloc);
-          if (getSliderPosition() != Math.floor(newloc * sliderLength / ($("#ui-slider-bar").width() - 2))) _callSliderCallbacks(Math.floor(newloc * sliderLength / ($("#ui-slider-bar").width() - 2)))
+          const maxPos = $('#ui-slider-bar').width() - 2;
+          if (newloc > maxPos) newloc = maxPos;
+          const version = Math.floor(newloc * sliderLength / maxPos);
+          $('#revision_label').html(html10n.get('timeslider.version', {version}));
+          $(this).css('left', newloc);
+          if (getSliderPosition() !== version) _callSliderCallbacks(version);
         });
-        $(document).mouseup(function(evt2)
-        {
+        $(document).mouseup((evt2) => {
           $(document).unbind('mousemove');
           $(document).unbind('mouseup');
           sliderActive = false;
-          var newloc = self.currentLoc + (evt2.clientX - self.startLoc);
+          let newloc = this.currentLoc + (evt2.clientX - this.startLoc);
           if (newloc < 0) newloc = 0;
-          if (newloc > ($("#ui-slider-bar").width() - 2)) newloc = ($("#ui-slider-bar").width() - 2);
-          $(self).css('left', newloc);
-          // if(getSliderPosition() != Math.floor(newloc * sliderLength / ($("#ui-slider-bar").width()-2)))
-          setSliderPosition(Math.floor(newloc * sliderLength / ($("#ui-slider-bar").width() - 2)))
-          if(parseInt($(self).css('left')) < 2){
-            $(self).css('left', '2px');
-          }else{
-            self.currentLoc = parseInt($(self).css('left'));
+          const maxPos = $('#ui-slider-bar').width() - 2;
+          if (newloc > maxPos) newloc = maxPos;
+          $(this).css('left', newloc);
+          setSliderPosition(Math.floor(newloc * sliderLength / maxPos));
+          if (parseInt($(this).css('left')) < 2) {
+            $(this).css('left', '2px');
+          } else {
+            this.currentLoc = parseInt($(this).css('left'));
           }
-        });
-      })
-
-      // play/pause toggling
-      $("#playpause_button").mousedown(function(evt)
-      {
-        var self = this;
-
-        // $(self).css('background-image', 'url(/static/img/crushed_button_depressed.png)');
-        $(self).mouseup(function(evt2)
-        {
-          // $(self).css('background-image', 'url(/static/img/crushed_button_undepressed.png)');
-          $(self).unbind('mouseup');
-          BroadcastSlider.playpause();
-        });
-        $(document).mouseup(function(evt2)
-        {
-          // $(self).css('background-image', 'url(/static/img/crushed_button_undepressed.png)');
-          $(document).unbind('mouseup');
         });
       });
 
+      // play/pause toggling
+      $('#playpause_button_icon').click((evt) => {
+        BroadcastSlider.playpause();
+      });
+
       // next/prev saved revision and changeset
-      $('.stepper').mousedown(function(evt)
-      {
-        var self = this;
-        var origcss = $(self).css('background-position');
-        if (!origcss)
-        {
-          origcss = $(self).css('background-position-x') + " " + $(self).css('background-position-y');
-        }
-        var origpos = parseInt(origcss.split(" ")[1]);
-        var newpos = (origpos - 43);
-        if (newpos < 0) newpos += 87;
-
-        var newcss = (origcss.split(" ")[0] + " " + newpos + "px");
-        if ($(self).css('opacity') != 1.0) newcss = origcss;
-
-        $(self).css('background-position', newcss)
-
-        $(self).mouseup(function(evt2)
-        {
-          $(self).css('background-position', origcss);
-          $(self).unbind('mouseup');
-          $(document).unbind('mouseup');
-          if ($(self).attr("id") == ("leftstep"))
-          {
+      $('.stepper').click(function (evt) {
+        switch ($(this).attr('id')) {
+          case 'leftstep':
             setSliderPosition(getSliderPosition() - 1);
-          }
-          else if ($(self).attr("id") == ("rightstep"))
-          {
+            break;
+          case 'rightstep':
             setSliderPosition(getSliderPosition() + 1);
-          }
-          else if ($(self).attr("id") == ("leftstar"))
-          {
-            var nextStar = 0; // default to first revision in document
-            for (var i = 0; i < savedRevisions.length; i++)
-            {
-              var pos = parseInt(savedRevisions[i].attr('pos'));
+            break;
+          case 'leftstar': {
+            let nextStar = 0; // default to first revision in document
+            for (let i = 0; i < savedRevisions.length; i++) {
+              const pos = parseInt(savedRevisions[i].attr('pos'));
               if (pos < getSliderPosition() && nextStar < pos) nextStar = pos;
             }
             setSliderPosition(nextStar);
+            break;
           }
-          else if ($(self).attr("id") == ("rightstar"))
-          {
-            var nextStar = sliderLength; // default to last revision in document
-            for (var i = 0; i < savedRevisions.length; i++)
-            {
-              var pos = parseInt(savedRevisions[i].attr('pos'));
+          case 'rightstar': {
+            let nextStar = sliderLength; // default to last revision in document
+            for (let i = 0; i < savedRevisions.length; i++) {
+              const pos = parseInt(savedRevisions[i].attr('pos'));
               if (pos > getSliderPosition() && nextStar > pos) nextStar = pos;
             }
             setSliderPosition(nextStar);
-          }
-        });
-        $(document).mouseup(function(evt2)
-        {
-          $(self).css('background-position', origcss);
-          $(self).unbind('mouseup');
-          $(document).unbind('mouseup');
-        });
-      })
-
-      if (clientVars)
-      {
-        $("#timeslider").show();
-        
-        var startPos = clientVars.collab_client_vars.rev;
-        if(window.location.hash.length > 1)
-        {
-          var hashRev = Number(window.location.hash.substr(1));
-          if(!isNaN(hashRev))
-          {
-            // this is necessary because of the socket.io-event which loads the changesets
-            setTimeout(function() { setSliderPosition(hashRev); }, 1);
+            break;
           }
         }
-        
+      });
+
+      if (clientVars) {
+        $('#timeslider-wrapper').show();
+
+        if (window.location.hash.length > 1) {
+          const hashRev = Number(window.location.hash.substr(1));
+          if (!isNaN(hashRev)) {
+            // this is necessary because of the socket.io-event which loads the changesets
+            setTimeout(() => { setSliderPosition(hashRev); }, 1);
+          }
+        }
+
         setSliderLength(clientVars.collab_client_vars.rev);
         setSliderPosition(clientVars.collab_client_vars.rev);
-        
-        _.each(clientVars.savedRevisions, function(revision)
-        {
+
+        _.each(clientVars.savedRevisions, (revision) => {
           addSavedRevision(revision.revNum, revision);
-        })
-        
+        });
       }
     });
   })();
 
-  BroadcastSlider.onSlider(function(loc)
-  {
-    $("#viewlatest").html(loc == BroadcastSlider.getSliderLength() ? "Viewing latest content" : "View latest content");
-  })
+  BroadcastSlider.onSlider((loc) => {
+    $('#viewlatest').html(
+        `${loc === BroadcastSlider.getSliderLength() ? 'Viewing' : 'View'} latest content`);
+  });
 
   return BroadcastSlider;
-}
+};
 
 exports.loadBroadcastSliderJS = loadBroadcastSliderJS;

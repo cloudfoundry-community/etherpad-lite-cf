@@ -1,10 +1,13 @@
 {
 	"@metadata": {
 		"authors": [
+			"BaRaN6161 TURK",
+			"Kaleem Bhatti",
 			"Mehtab ahmed",
 			"Tweety"
 		]
 	},
+	"admin_settings": "ترتيبون",
 	"index.newPad": "نئين پٽي",
 	"index.createOpenPad": "يا نالي سان ڪا پٽي تخليق ڪريو\\کوليو:",
 	"pad.toolbar.bold.title": "وزني (Ctrl+B)",
@@ -23,7 +26,6 @@
 	"pad.colorpicker.save": "سانڍيو",
 	"pad.colorpicker.cancel": "رد",
 	"pad.loading": "لاهيندي...",
-	"pad.wrongPassword": "توهان جو ڳجھو لفظ غلط هيو",
 	"pad.settings.padSettings": "پٽي جو ترتيبون",
 	"pad.settings.myView": "منهنجو نظارو",
 	"pad.settings.stickychat": "ڳالھ ٻولھ هميشه پردي تي ڪريو",
@@ -31,7 +33,6 @@
 	"pad.settings.linenocheck": "سٽ جا انگ",
 	"pad.settings.rtlcheck": "مواد ساڄي کان کاٻي طرف پڙهندئو؟",
 	"pad.settings.fontType": "اکرن جو قسم:",
-	"pad.settings.globalView": "عالمي نظارو",
 	"pad.settings.language": "ٻولي:",
 	"pad.importExport.import_export": "برآمد/درآمد",
 	"pad.importExport.import": "ڪو به متن وارو فائيل يا دستاويز چاڙهيو",
@@ -66,8 +67,8 @@
 	"timeslider.toolbar.authorsList": "ڪوبه ليکڪ ناهي",
 	"timeslider.toolbar.exportlink.title": "برآمد ڪريو",
 	"timeslider.version": "ورزن {{version}}",
-	"timeslider.saved": "شانڍيل {{مهينو}} {{ڏينهن}}, {{سال}}",
-	"timeslider.dateformat": "{{مهينو}}/{{ڏينهن}}/{{سال}} {{ڪلاڪ}}:{{منٽ}}:{{سيڪنڊ}}",
+	"timeslider.saved": "سانڍيل {{month}} {{day}}، {{year}}",
+	"timeslider.dateformat": "{{month}}/{{day}}/{{year}} {{hours}}:{{minutes}}:{{seconds}}",
 	"timeslider.month.january": "جنوري",
 	"timeslider.month.february": "فيبروري",
 	"timeslider.month.march": "مارچ",
@@ -82,9 +83,6 @@
 	"timeslider.month.december": "ڊسمبر",
 	"pad.userlist.entername": "پنهنجو نالو داخل ڪريو",
 	"pad.userlist.unnamed": "بينام",
-	"pad.userlist.guest": "مهمان",
-	"pad.userlist.deny": "انڪار ڪريو",
-	"pad.userlist.approve": "قبول ڪريو",
 	"pad.impexp.importbutton": "هاڻي درآمد ڪريو",
 	"pad.impexp.importing": "درآمد ڪندي...",
 	"pad.impexp.uploadFailed": "چاڙھ ناڪام ويو، براءِ مهرباني ٻيهر ڪوشش ڪريو",

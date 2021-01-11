@@ -21,13 +21,11 @@
 	"pad.colorpicker.cancel": "Aoka ihany",
 	"pad.loading": "Am-pakàna…",
 	"pad.permissionDenied": "Tsy manana lalalana mijery ity pad ity ianao",
-	"pad.wrongPassword": "Diso ny tenimiafinao",
 	"pad.settings.padSettings": "Safidin'ny ped",
 	"pad.settings.myView": "Ny jeriko",
 	"pad.settings.linenocheck": "Laharan'ny andalana",
 	"pad.settings.rtlcheck": "Hamaky ny votoatiny miankavia?",
 	"pad.settings.fontType": "Karazan-tarehintsoratra:",
-	"pad.settings.globalView": "Jery ankapobe",
 	"pad.settings.language": "Fiteny:",
 	"pad.importExport.import_export": "Hampiditra/Hamoaka",
 	"pad.importExport.import": "Hampiditra raki-tsoratra na rakitra",
@@ -82,9 +80,6 @@
 	"timeslider.month.november": "Novambra",
 	"timeslider.month.december": "Desambra",
 	"pad.userlist.unnamed": "tsy manana naarana",
-	"pad.userlist.guest": "Nasaina",
-	"pad.userlist.deny": "Lavina",
-	"pad.userlist.approve": "Ekena",
 	"pad.impexp.importbutton": "Ampidirina izao",
 	"pad.impexp.importing": "Mampiditra..."
 }

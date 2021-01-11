@@ -1,116 +1,131 @@
-var eejs = require('ep_etherpad-lite/node/eejs');
-var settings = require('ep_etherpad-lite/node/utils/Settings');
-var installer = require('ep_etherpad-lite/static/js/pluginfw/installer');
-var plugins = require('ep_etherpad-lite/static/js/pluginfw/plugins');
-var _ = require('underscore');
-var semver = require('semver');
+'use strict';
 
-exports.expressCreateServer = function (hook_name, args, cb) {
-  args.app.get('/admin/plugins', function(req, res) {
-    var plugins = require("ep_etherpad-lite/static/js/pluginfw/plugins");
-    var render_args = {
+const eejs = require('../../eejs');
+const settings = require('../../utils/Settings');
+const installer = require('../../../static/js/pluginfw/installer');
+const plugins = require('../../../static/js/pluginfw/plugin_defs');
+const _ = require('underscore');
+const semver = require('semver');
+const UpdateCheck = require('../../utils/UpdateCheck');
+
+exports.expressCreateServer = (hookName, args, cb) => {
+  args.app.get('/admin/plugins', (req, res) => {
+    res.send(eejs.require('ep_etherpad-lite/templates/admin/plugins.html', {
       plugins: plugins.plugins,
-      search_results: {},
+      req,
       errors: [],
-    };
-    res.send( eejs.require("ep_etherpad-lite/templates/admin/plugins.html", render_args) );
+    }));
   });
-  args.app.get('/admin/plugins/info', function(req, res) {
-    var gitCommit = settings.getGitCommit();
-    var epVersion = settings.getEpVersion();
-    res.send( eejs.require("ep_etherpad-lite/templates/admin/plugins-info.html",
-      {
-        gitCommit: gitCommit,
-        epVersion: epVersion
-      }) 
-    );
+
+  args.app.get('/admin/plugins/info', (req, res) => {
+    const gitCommit = settings.getGitCommit();
+    const epVersion = settings.getEpVersion();
+
+    res.send(eejs.require('ep_etherpad-lite/templates/admin/plugins-info.html', {
+      gitCommit,
+      epVersion,
+      latestVersion: UpdateCheck.getLatestVersion(),
+      req,
+    }));
   });
-}
 
-exports.socketio = function (hook_name, args, cb) {
-  var io = args.io.of("/pluginfw/installer");
-  io.on('connection', function (socket) {
+  return cb();
+};
 
-    if (!socket.conn.request.session || !socket.conn.request.session.user || !socket.conn.request.session.user.is_admin) return;
+exports.socketio = (hookName, args, cb) => {
+  const io = args.io.of('/pluginfw/installer');
+  io.on('connection', (socket) => {
+    const {session: {user: {is_admin: isAdmin} = {}} = {}} = socket.conn.request;
+    if (!isAdmin) return;
 
-    socket.on("getInstalled", function (query) {
+    socket.on('getInstalled', (query) => {
       // send currently installed plugins
-      var installed = Object.keys(plugins.plugins).map(function(plugin) {
-        return plugins.plugins[plugin].package
-      })
-      socket.emit("results:installed", {installed: installed});
+      const installed =
+          Object.keys(plugins.plugins).map((plugin) => plugins.plugins[plugin].package);
+
+      socket.emit('results:installed', {installed});
     });
-    
-    socket.on("checkUpdates", function() {
+
+    socket.on('checkUpdates', async () => {
       // Check plugins for updates
-      installer.getAvailablePlugins(/*maxCacheAge:*/60*10, function(er, results) {
-        if(er) {
-          console.warn(er);
-          socket.emit("results:updatable", {updatable: {}});
-          return;
-        }
-        var updatable = _(plugins.plugins).keys().filter(function(plugin) {
-          if(!results[plugin]) return false;
-          var latestVersion = results[plugin].version
-          var currentVersion = plugins.plugins[plugin].package.version
-          return semver.gt(latestVersion, currentVersion)
+      try {
+        const results = await installer.getAvailablePlugins(/* maxCacheAge:*/ 60 * 10);
+
+        const updatable = _(plugins.plugins).keys().filter((plugin) => {
+          if (!results[plugin]) return false;
+
+          const latestVersion = results[plugin].version;
+          const currentVersion = plugins.plugins[plugin].package.version;
+
+          return semver.gt(latestVersion, currentVersion);
         });
-        socket.emit("results:updatable", {updatable: updatable});
-      });
-    })
-    
-    socket.on("getAvailable", function (query) {
-        installer.getAvailablePlugins(/*maxCacheAge:*/false, function (er, results) {
-          if(er) {
-            console.error(er)
-            results = {}
-          }
-          socket.emit("results:available", results);
-      });
+
+        socket.emit('results:updatable', {updatable});
+      } catch (er) {
+        console.warn(er);
+
+        socket.emit('results:updatable', {updatable: {}});
+      }
     });
 
-    socket.on("search", function (query) {
-      installer.search(query.searchTerm, /*maxCacheAge:*/60*10, function (er, results) {
-        if(er) {
-          console.error(er)
-          results = {}
-        }
-        var res = Object.keys(results)
-          .map(function(pluginName) {
-            return results[pluginName]
-          })
-          .filter(function(plugin) {
-            return !plugins.plugins[plugin.name]
-          });
+    socket.on('getAvailable', async (query) => {
+      try {
+        const results = await installer.getAvailablePlugins(/* maxCacheAge:*/ false);
+        socket.emit('results:available', results);
+      } catch (er) {
+        console.error(er);
+        socket.emit('results:available', {});
+      }
+    });
+
+    socket.on('search', async (query) => {
+      try {
+        const results = await installer.search(query.searchTerm, /* maxCacheAge:*/ 60 * 10);
+        let res = Object.keys(results)
+            .map((pluginName) => results[pluginName])
+            .filter((plugin) => !plugins.plugins[plugin.name]);
         res = sortPluginList(res, query.sortBy, query.sortDir)
-          .slice(query.offset, query.offset+query.limit);
-        socket.emit("results:search", {results: res, query: query});
+            .slice(query.offset, query.offset + query.limit);
+        socket.emit('results:search', {results: res, query});
+      } catch (er) {
+        console.error(er);
+
+        socket.emit('results:search', {results: {}, query});
+      }
+    });
+
+    socket.on('install', (pluginName) => {
+      installer.install(pluginName, (er) => {
+        if (er) console.warn(er);
+
+        socket.emit('finished:install', {
+          plugin: pluginName,
+          code: er ? er.code : null,
+          error: er ? er.message : null,
+        });
       });
     });
 
-    socket.on("install", function (plugin_name) {
-      installer.install(plugin_name, function (er) {
-        if(er) console.warn(er)
-        socket.emit("finished:install", {plugin: plugin_name, code: er? er.code : null, error: er? er.message : null});
-      });
-    });
+    socket.on('uninstall', (pluginName) => {
+      installer.uninstall(pluginName, (er) => {
+        if (er) console.warn(er);
 
-    socket.on("uninstall", function (plugin_name) {
-      installer.uninstall(plugin_name, function (er) {
-        if(er) console.warn(er)
-        socket.emit("finished:uninstall", {plugin: plugin_name, error: er? er.message : null});
+        socket.emit('finished:uninstall', {plugin: pluginName, error: er ? er.message : null});
       });
     });
   });
-}
+  return cb();
+};
 
-function sortPluginList(plugins, property, /*ASC?*/dir) {
-  return plugins.sort(function(a, b) {
-    if (a[property] < b[property])
-       return dir? -1 : 1;
-    if (a[property] > b[property])
-       return dir? 1 : -1;
-    // a must be equal to b
-    return 0;
-  })
-}
+const sortPluginList = (plugins, property, /* ASC?*/dir) => plugins.sort((a, b) => {
+  if (a[property] < b[property]) {
+    return dir ? -1 : 1;
+  }
+
+  if (a[property] > b[property]) {
+    return dir ? 1 : -1;
+  }
+
+  // a must be equal to b
+  return 0;
+});
